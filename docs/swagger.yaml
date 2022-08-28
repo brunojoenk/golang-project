@@ -1,0 +1,300 @@
+basePath: /
+definitions:
+  models.AuthorResponse:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  models.AuthorResponseMetadata:
+    properties:
+      authors:
+        items:
+          $ref: '#/definitions/models.AuthorResponse'
+        type: array
+      pagination:
+        $ref: '#/definitions/models.Pagination'
+    type: object
+  models.BookRequestCreateUpdate:
+    properties:
+      authors:
+        items:
+          type: integer
+        type: array
+      edition:
+        type: string
+      name:
+        type: string
+      publication_year:
+        type: integer
+    type: object
+  models.BookResponse:
+    properties:
+      authors:
+        type: string
+      edition:
+        type: string
+      name:
+        type: string
+      publication_year:
+        type: integer
+    type: object
+  models.Pagination:
+    properties:
+      limit:
+        type: integer
+      page:
+        type: integer
+    type: object
+host: localhost:3000
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a sample server to manager books.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Swagger API
+  version: "1.0"
+paths:
+  /authors:
+    get:
+      consumes:
+      - '*/*'
+      description: Show all the authors with paginations.
+      parameters:
+      - description: search authors by name
+        example: string
+        in: query
+        name: name
+        type: string
+      - description: page list
+        example: 1
+        in: query
+        minimum: 1
+        name: page
+        type: integer
+      - description: page size
+        example: 1
+        in: query
+        minimum: 1
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.AuthorResponseMetadata'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Show all the authors with paginations.
+      tags:
+      - Authors
+  /authors/import:
+    post:
+      consumes:
+      - '*/*'
+      description: Import authors from authors.csv.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.AuthorResponseMetadata'
+            type: array
+      summary: Import authors from authors.csv.
+      tags:
+      - Authors
+  /book:
+    post:
+      consumes:
+      - application/json
+      description: Create a book.
+      parameters:
+      - description: query params
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.BookRequestCreateUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Create a book.
+      tags:
+      - Books
+  /book/{id}:
+    delete:
+      consumes:
+      - '*/*'
+      description: Delete a book.
+      parameters:
+      - description: Book ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Delete a book.
+      tags:
+      - Books
+    get:
+      consumes:
+      - '*/*'
+      description: gET a book.
+      parameters:
+      - description: Book ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.BookResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get a book.
+      tags:
+      - Books
+    put:
+      consumes:
+      - '*/*'
+      description: Update a book.
+      parameters:
+      - description: Book ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: query params
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.BookRequestCreateUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Update a book.
+      tags:
+      - Books
+  /books:
+    get:
+      consumes:
+      - '*/*'
+      description: Show all the books with paginations.
+      parameters:
+      - description: search book by name
+        example: string
+        in: query
+        name: name
+        type: string
+      - description: search book by edition
+        example: string
+        in: query
+        name: edition
+        type: string
+      - description: search book by publication year
+        example: 1
+        in: query
+        minimum: 1
+        name: publication_year
+        type: integer
+      - description: search book by author
+        example: string
+        in: query
+        name: author
+        type: string
+      - description: page list
+        example: 1
+        in: query
+        minimum: 1
+        name: page
+        type: integer
+      - description: page size
+        example: 1
+        in: query
+        minimum: 1
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.AuthorResponseMetadata'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Show all the books with paginations.
+      tags:
+      - Books
+swagger: "2.0"

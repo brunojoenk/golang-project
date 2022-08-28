@@ -1,0 +1,41 @@
+version: '3.9'
+services:
+  postgres-go:
+    container_name: postgres-go
+    build: 
+      context: .
+      dockerfile: dockerfile.postgres
+    ports:
+      - 5433:5432
+    networks:
+      - golangtestdriver
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  golang-test-app:
+    container_name: golang-test-app
+    environment:
+      - POSTGRES_HOST=postgres-go
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DBNAME=postgres
+      - SERVER_PORT=3000
+      - 
+    build: 
+      context: .
+      dockerfile: dockerfile.backend
+    ports:
+      - 3000:3000
+    depends_on:
+      postgres-go:
+        condition: service_healthy
+    networks:
+      - golangtestdriver
+
+networks:
+  golangtestdriver:
+    name: golangtestdriver

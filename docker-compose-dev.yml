@@ -1,0 +1,12 @@
+version: '3.7'
+services:
+  postgres-go:
+    container_name: postgres-go
+    build: 
+      context: .
+      dockerfile: dockerfile.postgres
+    ports:
+      - 5432:5432
+
+
+
