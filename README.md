@@ -21,6 +21,11 @@ This app contains a CRUD of books and APIs to manager authors of these books.
 
 You can use Makefile to use commands of the app:
 
+To run all services by docker
+```
+services-up
+```
+
 To build and run project:
 ```
 make run-services-dev
