@@ -5,10 +5,11 @@ This app contains a CRUD of books and APIs to manager authors of these books.
 - https://golang-test-books.herokuapp.com/swagger/index.html
 
 ### Requiriments
-- Golang 1.18+
-- Docker (docker-compose)
-- Swagger (https://github.com/swaggo/echo-swagger)
-- Makefile
+- [Golang 1.18+](https://go.dev/)
+- [Postgres](https://www.postgresql.org/)
+- [Docker](https://www.docker.com/)
+- [Swagger](https://github.com/swaggo/echo-swagger);
+- [Makefile](https://makefiletutorial.com/)
 
 ### Environment vars (for local environment):
 ```
@@ -63,12 +64,13 @@ make swagger
 
 ####
 
-- Used MacOS to develo app
+- Used MacOS to develo app;
+- Used psotgres database;
 - Used Echo for web framework;
 - Used Swagger to generate and able APIs;
-- Used Gorm ORM
-- Used Docker
-- Used Make
+- Used Gorm ORM;
+- Used Docker;
+- Used Make;
 
 #### Difficults
 
