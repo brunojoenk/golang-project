@@ -66,9 +66,9 @@ make swagger
 
 - I used MacOS to develo app;
 - I used VSCode IDE to code it;
-- I used psotgres database;
+- I used Postgres database;
 - I used Echo for web framework;
-- I used Swagger to generate and able APIs;
+- I used Swagger to generate doccs of APIs;
 - I used Gorm ORM;
 - I used Docker;
 - I used Make;
