@@ -5,8 +5,9 @@ import (
 )
 
 type Config struct {
-	ServerPort string
-	Postgres   PostgresConfig
+	ServerPort  string
+	DatabaseURL string
+	Postgres    PostgresConfig
 }
 
 // Postgresql config
@@ -20,14 +21,8 @@ type PostgresConfig struct {
 
 func New() *Config {
 	return &Config{
-		ServerPort: getEnv("SERVER_PORT", "3000"),
-		Postgres: PostgresConfig{
-			PostgresqlHost:     getEnv("POSTGRES_HOST", "localhost"),
-			PostgresqlPort:     getEnv("POSTGRES_PORT", "5432"),
-			PostgresqlUser:     getEnv("POSTGRES_USER", "postgres"),
-			PostgresqlPassword: getEnv("POSTGRES_PASSWORD", "postgres"),
-			PostgresqlDbname:   getEnv("POSTGRES_DBNAME", "postgres"),
-		},
+		ServerPort:  getEnv("PORT", "3000"),
+		DatabaseURL: getEnv("DATABASE_URL", "postgres://postgres:postgres@localhost:5432/postgres"),
 	}
 }
 

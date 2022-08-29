@@ -1,6 +1,6 @@
 export AUTHORS_FILE_PATH=./data/authors.csv
 
-services-up: 
+services-all-up: 
 	docker-compose up -d --build
 
 services-down: 

@@ -23,7 +23,7 @@ You can use Makefile to use commands of the app:
 
 To run all services by docker
 ```
-services-up
+make services-all-up
 ```
 
 To build and run project:

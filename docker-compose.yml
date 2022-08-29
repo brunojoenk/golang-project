@@ -18,12 +18,8 @@ services:
   golang-test-app:
     container_name: golang-test-app
     environment:
-      - POSTGRES_HOST=postgres-go
-      - POSTGRES_PORT=5432
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DBNAME=postgres
-      - SERVER_PORT=3000
+      - DATABASE_URL=postgres://postgres:postgres@postgres-go:5432/postgres
+      - PORT=3000
       - AUTHORS_FILE_PATH=./data/authors.csv
     build: 
       context: .
