@@ -1,3 +1,5 @@
+export AUTHORS_FILE_PATH=./data/authors.csv
+
 services-up: 
 	docker-compose up -d --build
 

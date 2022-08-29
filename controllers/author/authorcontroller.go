@@ -5,6 +5,7 @@ import (
 	"github/brunojoenk/golang-test/models"
 	services "github/brunojoenk/golang-test/services/author"
 	"net/http"
+	"os"
 
 	_ "github/brunojoenk/golang-test/docs"
 
@@ -70,7 +71,14 @@ func (a *AuthorController) GetAllAuthors(c echo.Context) error {
 // @Success 200 {array} models.AuthorResponseMetadata
 // @Router /authors/import [post]
 func (a *AuthorController) ReadCsvHandler(c echo.Context) error {
-	names, err := a.importAuthorsFromCSVFile("./data/authors.csv")
+
+	authorsFilePath := os.Getenv("AUTHORS_FILE_PATH")
+	if authorsFilePath == "" {
+		c.Logger().Info("Setting default value for author file path (env AUTHORS_FILE_PATH)")
+		//Set default, safe mode. When run locally, this env is exported on makefile
+		authorsFilePath = "./data/authorsreduced.csv"
+	}
+	names, err := a.importAuthorsFromCSVFile(authorsFilePath)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, fmt.Sprintf("Error on import authors: %s", err.Error()))
 	}

@@ -52,12 +52,12 @@ func TestGetAllAuthorsError(t *testing.T) {
 }
 
 func TestImportAuthorsFromCSVFile(t *testing.T) {
-	resp, err := authorServiceTest.ImportAuthorsFromCSVFile("../../data/authorstest.csv")
+	resp, err := authorServiceTest.ImportAuthorsFromCSVFile("../../data/authorsreduced.csv")
 	require.NoError(t, err)
 	require.Equal(t, len(resp), 6)
 }
 
 func TestImportAuthorsFromCSVFileError(t *testing.T) {
-	_, err := authorServiceTest.ImportAuthorsFromCSVFile("anywhere.csv")
+	_, err := authorServiceTest.ImportAuthorsFromCSVFile("anyfile")
 	require.Error(t, err)
 }

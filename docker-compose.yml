@@ -24,7 +24,7 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DBNAME=postgres
       - SERVER_PORT=3000
-      - 
+      - AUTHORS_FILE_PATH=./data/authors.csv
     build: 
       context: .
       dockerfile: dockerfile.backend

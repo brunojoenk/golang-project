@@ -6,6 +6,7 @@ import (
 	"github/brunojoenk/golang-test/models"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
@@ -109,4 +110,27 @@ func TestImportReadCsvHandler(t *testing.T) {
 	//require.ErrorIs(t, errExpected, err)
 	require.Equal(t, http.StatusOK, rec.Code)
 	require.Equal(t, expectedFuncCalled, 1)
+}
+
+func TestImportReadCsvHandlerError(t *testing.T) {
+	os.Setenv("AUTHORS_FILE_PATH", "")
+	expectedFuncCalled := 0
+	fileCalled := ""
+	authorControllerTest.importAuthorsFromCSVFile = func(file string) ([]string, error) {
+		expectedFuncCalled = expectedFuncCalled + 1
+		fileCalled = file
+		return nil, errors.New("Error occurred")
+	}
+
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	authorControllerTest.ReadCsvHandler(c)
+
+	//require.ErrorIs(t, errExpected, err)
+	require.Equal(t, http.StatusInternalServerError, rec.Code)
+	require.Equal(t, expectedFuncCalled, 1)
+	require.Equal(t, "./data/authorsreduced.csv", fileCalled)
 }
