@@ -64,13 +64,14 @@ make swagger
 
 ####
 
-- Used MacOS to develo app;
-- Used psotgres database;
-- Used Echo for web framework;
-- Used Swagger to generate and able APIs;
-- Used Gorm ORM;
-- Used Docker;
-- Used Make;
+- I used MacOS to develo app;
+- I used VSCode IDE to code it;
+- I used psotgres database;
+- I used Echo for web framework;
+- I used Swagger to generate and able APIs;
+- I used Gorm ORM;
+- I used Docker;
+- I used Make;
 
 #### Difficults
 
