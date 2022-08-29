@@ -1,6 +1,9 @@
 ## Golang-test
 This app contains a CRUD of books and APIs to manager authors of these books.
 
+### Cloud app APIs
+- https://golang-test-books.herokuapp.com/swagger/index.html
+
 ### Requiriments
 - Golang 1.18+
 - Docker (docker-compose)
