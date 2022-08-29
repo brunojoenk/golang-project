@@ -12,12 +12,9 @@ This app contains a CRUD of books and APIs to manager authors of these books.
 
 ### Environment vars (for local environment):
 ```
-      - POSTGRES_HOST=lcoalhost
-      - POSTGRES_PORT=5432
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DBNAME=postgres
-      - SERVER_PORT=3000
+      - DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres
+      - PORT=3000
+      - AUTHORS_FILE_PATH=./data/authors.csv
 ```
 
 ### How to run locally
