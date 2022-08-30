@@ -90,6 +90,7 @@ func (a *AuthorService) ImportAuthorsFromCSVFile(file string) ([]string, error) 
 				err := a.createAuthorInBatchRepo(batch, count)
 				if err != nil {
 					log.Error("Error on create author in batch repository: ", err.Error())
+					return nil, err
 				}
 				batch = make([]*models.Author, 0)
 				count = 0
