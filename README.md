@@ -62,8 +62,6 @@ make swagger
 
 ### Tools and steps to built this app
 
-####
-
 - I used MacOS to develo app;
 - I used VSCode IDE to code it;
 - I used Postgres database;
@@ -80,3 +78,6 @@ make swagger
 - On use docker-compose, the host to connect on database is different, when run only container of database, I need use localhost, but when is communicate between two containers, I need use postgres-go and create new network for this communication called golangtestdriver (You can see it on docker-compose.yml).
 
 - To turn easier for manager relations of book/authors, I decided to use Gorm.
+
+#### Observations
+- In branch 'turn-func-concurrence' I made some tests using concurrence to improve response time on import a big list of authors from csv file

@@ -5,7 +5,7 @@ import (
 	"github/brunojoenk/golang-test/config"
 	"github/brunojoenk/golang-test/database"
 	"github/brunojoenk/golang-test/handlers"
-	"github/brunojoenk/golang-test/models"
+	"github/brunojoenk/golang-test/models/entities"
 
 	_ "github/brunojoenk/golang-test/docs"
 
@@ -43,7 +43,7 @@ func main() {
 	}
 
 	// Create/update tables on database
-	err = database.AutoMigrate(&models.Author{}, &models.Book{})
+	err = database.AutoMigrate(&entities.Author{}, &entities.Book{})
 	if err != nil {
 		e.Logger.Fatal("Error on execute migrate: ", err.Error())
 	}

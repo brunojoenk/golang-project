@@ -1,22 +1,22 @@
 basePath: /
 definitions:
-  models.AuthorResponse:
+  dtos.AuthorResponse:
     properties:
       id:
         type: integer
       name:
         type: string
     type: object
-  models.AuthorResponseMetadata:
+  dtos.AuthorResponseMetadata:
     properties:
       authors:
         items:
-          $ref: '#/definitions/models.AuthorResponse'
+          $ref: '#/definitions/dtos.AuthorResponse'
         type: array
       pagination:
-        $ref: '#/definitions/models.Pagination'
+        $ref: '#/definitions/dtos.Pagination'
     type: object
-  models.BookRequestCreateUpdate:
+  dtos.BookRequestCreateUpdate:
     properties:
       authors:
         items:
@@ -29,7 +29,7 @@ definitions:
       publication_year:
         type: integer
     type: object
-  models.BookResponse:
+  dtos.BookResponse:
     properties:
       authors:
         type: string
@@ -40,7 +40,7 @@ definitions:
       publication_year:
         type: integer
     type: object
-  models.Pagination:
+  dtos.Pagination:
     properties:
       limit:
         type: integer
@@ -90,7 +90,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.AuthorResponseMetadata'
+            $ref: '#/definitions/dtos.AuthorResponseMetadata'
         "400":
           description: Bad Request
           schema:
@@ -114,7 +114,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/models.AuthorResponseMetadata'
+              $ref: '#/definitions/dtos.AuthorResponseMetadata'
             type: array
       summary: Import authors from authors.csv.
       tags:
@@ -130,7 +130,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/models.BookRequestCreateUpdate'
+          $ref: '#/definitions/dtos.BookRequestCreateUpdate'
       produces:
       - application/json
       responses:
@@ -194,7 +194,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.BookResponse'
+            $ref: '#/definitions/dtos.BookResponse'
         "400":
           description: Bad Request
           schema:
@@ -221,7 +221,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/models.BookRequestCreateUpdate'
+          $ref: '#/definitions/dtos.BookRequestCreateUpdate'
       produces:
       - application/json
       responses:
@@ -285,7 +285,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.AuthorResponseMetadata'
+            $ref: '#/definitions/dtos.AuthorResponseMetadata'
         "400":
           description: Bad Request
           schema:

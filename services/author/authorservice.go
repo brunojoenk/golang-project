@@ -2,7 +2,8 @@ package services
 
 import (
 	"encoding/csv"
-	"github/brunojoenk/golang-test/models"
+	"github/brunojoenk/golang-test/models/dtos"
+	"github/brunojoenk/golang-test/models/entities"
 	authorrepo "github/brunojoenk/golang-test/repository/author"
 	"os"
 	"sync"
@@ -11,8 +12,8 @@ import (
 	"gorm.io/gorm"
 )
 
-type GetAllAuthors func(filter models.GetAuthorsFilter) ([]models.Author, error)
-type CreateAuthorInBatch func(author []*models.Author, batchSize int) error
+type GetAllAuthors func(filter dtos.GetAuthorsFilter) ([]entities.Author, error)
+type CreateAuthorInBatch func(author []*entities.Author, batchSize int) error
 
 type AuthorService struct {
 	getAllAuthorsRepository GetAllAuthors
@@ -25,7 +26,7 @@ func NewAuthorService(db *gorm.DB) *AuthorService {
 	return &AuthorService{getAllAuthorsRepository: repo.GetAllAuthors, createAuthorInBatchRepo: repo.CreateAuthorInBatch}
 }
 
-func (a *AuthorService) GetAllAuthors(filter models.GetAuthorsFilter) (*models.AuthorResponseMetadata, error) {
+func (a *AuthorService) GetAllAuthors(filter dtos.GetAuthorsFilter) (*dtos.AuthorResponseMetadata, error) {
 
 	filter.Pagination.ValidValuesAndSetDefault()
 	authors, err := a.getAllAuthorsRepository(filter)
@@ -34,16 +35,16 @@ func (a *AuthorService) GetAllAuthors(filter models.GetAuthorsFilter) (*models.A
 		return nil, err
 	}
 
-	authorsResponse := make([]models.AuthorResponse, 0)
+	authorsResponse := make([]dtos.AuthorResponse, 0)
 	for _, a := range authors {
-		authorResponse := &models.AuthorResponse{
+		authorResponse := &dtos.AuthorResponse{
 			Id:   a.Id,
 			Name: a.Name,
 		}
 		authorsResponse = append(authorsResponse, *authorResponse)
 	}
 
-	authorResponseMetada := &models.AuthorResponseMetadata{
+	authorResponseMetada := &dtos.AuthorResponseMetadata{
 		Authors:    authorsResponse,
 		Pagination: filter.Pagination,
 	}
@@ -64,15 +65,15 @@ func (a *AuthorService) ImportAuthorsFromCSVFile(file string) ([]string, error) 
 
 	fcsv := csv.NewReader(f)
 	fcsv.Comma = ';'
-	authors := make([]*models.Author, 0)
+	authors := make([]*entities.Author, 0)
 	numWorkers := 20
-	jobs := make(chan []*models.Author, numWorkers)
-	res := make(chan []*models.Author)
+	jobs := make(chan []*entities.Author, numWorkers)
+	res := make(chan []*entities.Author)
 
 	batchSize := 1000
 
 	var wg sync.WaitGroup
-	worker := func(jobs <-chan []*models.Author, results chan<- []*models.Author) error {
+	worker := func(jobs <-chan []*entities.Author, results chan<- []*entities.Author) error {
 		for {
 			select {
 			case job, ok := <-jobs: // you must check for readable state of the channel.
@@ -109,16 +110,16 @@ func (a *AuthorService) ImportAuthorsFromCSVFile(file string) ([]string, error) 
 		}
 		for _, record := range rStr {
 			count := 0
-			batch := make([]*models.Author, 0)
+			batch := make([]*entities.Author, 0)
 			for i, name := range record {
 				if !mapper[name] {
 					mapper[name] = true
 					count++
-					batch = append(batch, &models.Author{Name: name})
+					batch = append(batch, &entities.Author{Name: name})
 				}
 				if count == batchSize || i == (len(record)-1) {
 					jobs <- batch
-					batch = make([]*models.Author, 0)
+					batch = make([]*entities.Author, 0)
 					count = 0
 				}
 			}

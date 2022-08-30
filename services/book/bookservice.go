@@ -2,7 +2,8 @@ package services
 
 import (
 	"fmt"
-	"github/brunojoenk/golang-test/models"
+	"github/brunojoenk/golang-test/models/dtos"
+	"github/brunojoenk/golang-test/models/entities"
 	authorrepo "github/brunojoenk/golang-test/repository/author"
 	bookrepo "github/brunojoenk/golang-test/repository/book"
 	"github/brunojoenk/golang-test/utils"
@@ -11,12 +12,12 @@ import (
 	"gorm.io/gorm"
 )
 
-type GetAuthor func(id int) (*models.Author, error)
-type CreateBook func(book *models.Book) error
-type GetAllBooks func(filter models.GetBooksFilter) ([]models.Book, error)
+type GetAuthor func(id int) (*entities.Author, error)
+type CreateBook func(book *entities.Book) error
+type GetAllBooks func(filter dtos.GetBooksFilter) ([]entities.Book, error)
 type DeleteBook func(id int) error
-type GetBook func(id int) (*models.Book, error)
-type UpdateBook func(book *models.Book, authors []*models.Author) error
+type GetBook func(id int) (*entities.Book, error)
+type UpdateBook func(book *entities.Book, authors []*entities.Author) error
 
 type BookService struct {
 	getAuthorRepo   GetAuthor
@@ -41,8 +42,8 @@ func NewBookService(db *gorm.DB) *BookService {
 	}
 }
 
-func (b *BookService) CreateBook(bookRequestCreate models.BookRequestCreateUpdate) error {
-	var authors []*models.Author
+func (b *BookService) CreateBook(bookRequestCreate dtos.BookRequestCreateUpdate) error {
+	var authors []*entities.Author
 	for _, authorId := range bookRequestCreate.Authors {
 		author, err := b.getAuthorRepo(authorId)
 		if err != nil {
@@ -56,7 +57,7 @@ func (b *BookService) CreateBook(bookRequestCreate models.BookRequestCreateUpdat
 	}
 
 	// Create book.
-	book := models.Book{
+	book := entities.Book{
 		Name:            bookRequestCreate.Name,
 		Edition:         bookRequestCreate.Edition,
 		PublicationYear: bookRequestCreate.PublicationYear,
@@ -66,7 +67,7 @@ func (b *BookService) CreateBook(bookRequestCreate models.BookRequestCreateUpdat
 	return b.createBookRepo(&book)
 }
 
-func (b *BookService) GetAllBooks(filter models.GetBooksFilter) (*models.BookResponseMetadata, error) {
+func (b *BookService) GetAllBooks(filter dtos.GetBooksFilter) (*dtos.BookResponseMetadata, error) {
 
 	filter.Pagination.ValidValuesAndSetDefault()
 	books, err := b.getAllBooksRepo(filter)
@@ -75,7 +76,7 @@ func (b *BookService) GetAllBooks(filter models.GetBooksFilter) (*models.BookRes
 		return nil, err
 	}
 
-	booksResponse := make([]models.BookResponse, 0)
+	booksResponse := make([]dtos.BookResponse, 0)
 	for _, book := range books {
 
 		var authors string
@@ -87,7 +88,7 @@ func (b *BookService) GetAllBooks(filter models.GetBooksFilter) (*models.BookRes
 			authors += fmt.Sprintf(" | %s", author.Name)
 		}
 
-		bookResponse := &models.BookResponse{
+		bookResponse := &dtos.BookResponse{
 			Name:            book.Name,
 			Edition:         book.Edition,
 			PublicationYear: book.PublicationYear,
@@ -97,7 +98,7 @@ func (b *BookService) GetAllBooks(filter models.GetBooksFilter) (*models.BookRes
 		booksResponse = append(booksResponse, *bookResponse)
 	}
 
-	booksResponseMetadata := &models.BookResponseMetadata{
+	booksResponseMetadata := &dtos.BookResponseMetadata{
 		Books:      booksResponse,
 		Pagination: filter.Pagination,
 	}
@@ -109,7 +110,7 @@ func (b *BookService) DeleteBook(id int) error {
 	return b.deleteBookRepo(id)
 }
 
-func (b *BookService) GetBook(id int) (*models.BookResponse, error) {
+func (b *BookService) GetBook(id int) (*dtos.BookResponse, error) {
 	book, err := b.getBookRepo(id)
 
 	if err != nil {
@@ -130,7 +131,7 @@ func (b *BookService) GetBook(id int) (*models.BookResponse, error) {
 		authors += fmt.Sprintf(" | %s", author.Name)
 	}
 
-	bookResponse := models.BookResponse{
+	bookResponse := dtos.BookResponse{
 		Name:            book.Name,
 		Edition:         book.Edition,
 		PublicationYear: book.PublicationYear,
@@ -140,7 +141,7 @@ func (b *BookService) GetBook(id int) (*models.BookResponse, error) {
 	return &bookResponse, nil
 }
 
-func (b *BookService) UpdateBook(id int, bookRequestUpdate models.BookRequestCreateUpdate) error {
+func (b *BookService) UpdateBook(id int, bookRequestUpdate dtos.BookRequestCreateUpdate) error {
 	book, err := b.getBookRepo(id)
 
 	if err != nil {
@@ -148,7 +149,7 @@ func (b *BookService) UpdateBook(id int, bookRequestUpdate models.BookRequestCre
 		return err
 	}
 
-	var authors []*models.Author
+	var authors []*entities.Author
 	for _, authorId := range bookRequestUpdate.Authors {
 		author, err := b.getAuthorRepo(authorId)
 		if err != nil {

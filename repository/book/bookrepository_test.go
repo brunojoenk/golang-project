@@ -4,7 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
-	"github/brunojoenk/golang-test/models"
+	"github/brunojoenk/golang-test/models/dtos"
+	"github/brunojoenk/golang-test/models/entities"
 	"regexp"
 	"strings"
 	"testing"
@@ -85,11 +86,11 @@ func (s *Suite) Test_repository_Create_Book() {
 
 	s.mock.ExpectCommit()
 
-	err := s.repository.CreateBook(&models.Book{
+	err := s.repository.CreateBook(&entities.Book{
 		Name:            name,
 		Edition:         edition,
 		PublicationYear: publicationYear,
-		Authors:         []*models.Author{{Id: authorId, Name: authorName}}})
+		Authors:         []*entities.Author{{Id: authorId, Name: authorName}}})
 
 	require.NoError(s.T(), err)
 }
@@ -132,11 +133,11 @@ func (s *Suite) Test_repository_Update_Book() {
 
 	s.mock.ExpectCommit()
 
-	err := s.repository.UpdateBook(&models.Book{
+	err := s.repository.UpdateBook(&entities.Book{
 		Id:              bookId,
 		Name:            name,
 		Edition:         edition,
-		PublicationYear: publicationYear}, []*models.Author{{Id: authorId, Name: authorName}})
+		PublicationYear: publicationYear}, []*entities.Author{{Id: authorId, Name: authorName}})
 
 	require.NoError(s.T(), err)
 }
@@ -161,11 +162,11 @@ func (s *Suite) Test_repository_Update_Book_Error_On_Clear() {
 
 	s.mock.ExpectRollback()
 
-	err := s.repository.UpdateBook(&models.Book{
+	err := s.repository.UpdateBook(&entities.Book{
 		Id:              bookId,
 		Name:            name,
 		Edition:         edition,
-		PublicationYear: publicationYear}, []*models.Author{{Id: authorId, Name: authorName}})
+		PublicationYear: publicationYear}, []*entities.Author{{Id: authorId, Name: authorName}})
 
 	require.Error(s.T(), err)
 }
@@ -198,11 +199,11 @@ func (s *Suite) Test_repository_Update_Book_Error_On_Save() {
 
 	s.mock.ExpectRollback()
 
-	err := s.repository.UpdateBook(&models.Book{
+	err := s.repository.UpdateBook(&entities.Book{
 		Id:              bookId,
 		Name:            name,
 		Edition:         edition,
-		PublicationYear: publicationYear}, []*models.Author{{Id: authorId, Name: authorName}})
+		PublicationYear: publicationYear}, []*entities.Author{{Id: authorId, Name: authorName}})
 
 	require.Error(s.T(), err)
 }
@@ -223,7 +224,7 @@ func (s *Suite) Test_repository_Create_Book_Error() {
 
 	s.mock.ExpectRollback()
 
-	err := s.repository.CreateBook(&models.Book{
+	err := s.repository.CreateBook(&entities.Book{
 		Name:            name,
 		Edition:         edition,
 		PublicationYear: publicationYear})
@@ -260,10 +261,10 @@ func (s *Suite) Test_repository_Get_Book() {
 	res, err := s.repository.GetBook(id)
 
 	require.NoError(s.T(), err)
-	require.Nil(s.T(), deep.Equal(&models.Book{
+	require.Nil(s.T(), deep.Equal(&entities.Book{
 		Id:   id,
 		Name: name,
-		Authors: []*models.Author{
+		Authors: []*entities.Author{
 			{Id: authorId, Name: authorName}}}, res))
 }
 
@@ -317,13 +318,13 @@ func (s *Suite) Test_repository_Get_All_Books() {
 		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).
 			AddRow(authorId, authorName))
 
-	res, err := s.repository.GetAllBooks(models.GetBooksFilter{Name: name, Edition: edition, PublicationYear: publicationYear, Author: authorName})
+	res, err := s.repository.GetAllBooks(dtos.GetBooksFilter{Name: name, Edition: edition, PublicationYear: publicationYear, Author: authorName})
 
 	require.NoError(s.T(), err)
-	require.Nil(s.T(), deep.Equal([]models.Book{{
+	require.Nil(s.T(), deep.Equal([]entities.Book{{
 		Id:   id,
 		Name: name,
-		Authors: []*models.Author{
+		Authors: []*entities.Author{
 			{Id: authorId, Name: authorName}}}}, res))
 }
 
@@ -347,7 +348,7 @@ func (s *Suite) Test_repository_Get_All_Books_Error() {
 		WithArgs("%"+strings.ToLower(authorName)+"%", "%"+strings.ToLower(name)+"%", "%"+strings.ToLower(edition)+"%", publicationYear).
 		WillReturnError(context.Canceled)
 
-	_, err := s.repository.GetAllBooks(models.GetBooksFilter{Name: name, Edition: edition, PublicationYear: publicationYear, Author: authorName})
+	_, err := s.repository.GetAllBooks(dtos.GetBooksFilter{Name: name, Edition: edition, PublicationYear: publicationYear, Author: authorName})
 
 	require.Error(s.T(), err)
 
