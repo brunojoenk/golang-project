@@ -67,7 +67,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.AuthorResponseMetadata"
+                            "$ref": "#/definitions/dtos.AuthorResponseMetadata"
                         }
                     },
                     "400": {
@@ -104,7 +104,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/models.AuthorResponseMetadata"
+                                "$ref": "#/definitions/dtos.AuthorResponseMetadata"
                             }
                         }
                     }
@@ -131,7 +131,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.BookRequestCreateUpdate"
+                            "$ref": "#/definitions/dtos.BookRequestCreateUpdate"
                         }
                     }
                 ],
@@ -183,7 +183,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.BookResponse"
+                            "$ref": "#/definitions/dtos.BookResponse"
                         }
                     },
                     "400": {
@@ -226,7 +226,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.BookRequestCreateUpdate"
+                            "$ref": "#/definitions/dtos.BookRequestCreateUpdate"
                         }
                     }
                 ],
@@ -358,7 +358,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.AuthorResponseMetadata"
+                            "$ref": "#/definitions/dtos.AuthorResponseMetadata"
                         }
                     },
                     "400": {
@@ -378,7 +378,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "models.AuthorResponse": {
+        "dtos.AuthorResponse": {
             "type": "object",
             "properties": {
                 "id": {
@@ -389,21 +389,21 @@ const docTemplate = `{
                 }
             }
         },
-        "models.AuthorResponseMetadata": {
+        "dtos.AuthorResponseMetadata": {
             "type": "object",
             "properties": {
                 "authors": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.AuthorResponse"
+                        "$ref": "#/definitions/dtos.AuthorResponse"
                     }
                 },
                 "pagination": {
-                    "$ref": "#/definitions/models.Pagination"
+                    "$ref": "#/definitions/dtos.Pagination"
                 }
             }
         },
-        "models.BookRequestCreateUpdate": {
+        "dtos.BookRequestCreateUpdate": {
             "type": "object",
             "properties": {
                 "authors": {
@@ -423,7 +423,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.BookResponse": {
+        "dtos.BookResponse": {
             "type": "object",
             "properties": {
                 "authors": {
@@ -440,7 +440,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.Pagination": {
+        "dtos.Pagination": {
             "type": "object",
             "properties": {
                 "limit": {

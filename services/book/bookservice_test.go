@@ -2,7 +2,8 @@ package services
 
 import (
 	"errors"
-	"github/brunojoenk/golang-test/models"
+	"github/brunojoenk/golang-test/models/dtos"
+	"github/brunojoenk/golang-test/models/entities"
 	"github/brunojoenk/golang-test/utils"
 	"testing"
 
@@ -35,21 +36,21 @@ func TestCreateBook(t *testing.T) {
 		publicationYear = 2022
 		authorId        = 5
 		authorName      = "joenk"
-		authors         = []*models.Author{{Id: authorId, Name: authorName}}
+		authors         = []*entities.Author{{Id: authorId, Name: authorName}}
 	)
 
-	bookServiceTest.getAuthorRepo = func(id int) (*models.Author, error) {
+	bookServiceTest.getAuthorRepo = func(id int) (*entities.Author, error) {
 		return authors[0], nil
 	}
 
-	var bookToCreate *models.Book
+	var bookToCreate *entities.Book
 
-	bookServiceTest.createBookRepo = func(book *models.Book) error {
+	bookServiceTest.createBookRepo = func(book *entities.Book) error {
 		bookToCreate = book
 		return nil
 	}
 
-	err := bookServiceTest.CreateBook(models.BookRequestCreateUpdate{Name: name, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
+	err := bookServiceTest.CreateBook(dtos.BookRequestCreateUpdate{Name: name, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
 
 	require.NoError(t, err)
 	require.Equal(t, bookToCreate.Name, name)
@@ -68,11 +69,11 @@ func TestCreateBook_Error(t *testing.T) {
 
 	errExpected := errors.New("error occurred")
 
-	bookServiceTest.getAuthorRepo = func(id int) (*models.Author, error) {
+	bookServiceTest.getAuthorRepo = func(id int) (*entities.Author, error) {
 		return nil, errExpected
 	}
 
-	err := bookServiceTest.CreateBook(models.BookRequestCreateUpdate{Name: name, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
+	err := bookServiceTest.CreateBook(dtos.BookRequestCreateUpdate{Name: name, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
 
 	require.ErrorIs(t, err, errExpected)
 }
@@ -85,11 +86,11 @@ func TestCreateBook_Error_Whens_Is_Author_Id_Not_Found(t *testing.T) {
 		authorId        = 5
 	)
 
-	bookServiceTest.getAuthorRepo = func(id int) (*models.Author, error) {
-		return &models.Author{Id: 0}, nil
+	bookServiceTest.getAuthorRepo = func(id int) (*entities.Author, error) {
+		return &entities.Author{Id: 0}, nil
 	}
 
-	err := bookServiceTest.CreateBook(models.BookRequestCreateUpdate{Name: name, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
+	err := bookServiceTest.CreateBook(dtos.BookRequestCreateUpdate{Name: name, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
 
 	require.ErrorIs(t, err, utils.ErrAuthorIdNotFound)
 }
@@ -104,14 +105,14 @@ func TestGetAllBooks(t *testing.T) {
 		authorName        = "joenk"
 		anotherAuthorId   = 7
 		anotherAuthorName = "bruno"
-		authors           = []*models.Author{{Id: authorId, Name: authorName}, {Id: anotherAuthorId, Name: anotherAuthorName}}
+		authors           = []*entities.Author{{Id: authorId, Name: authorName}, {Id: anotherAuthorId, Name: anotherAuthorName}}
 	)
 
-	bookServiceTest.getAllBooksRepo = func(filter models.GetBooksFilter) ([]models.Book, error) {
-		return []models.Book{{Id: bookId, Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: authors}}, nil
+	bookServiceTest.getAllBooksRepo = func(filter dtos.GetBooksFilter) ([]entities.Book, error) {
+		return []entities.Book{{Id: bookId, Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: authors}}, nil
 	}
 
-	resp, err := bookServiceTest.GetAllBooks(models.GetBooksFilter{})
+	resp, err := bookServiceTest.GetAllBooks(dtos.GetBooksFilter{})
 
 	require.NoError(t, err)
 	require.Equal(t, resp.Books[0].Name, bookName)
@@ -123,11 +124,11 @@ func TestGetAllBooks(t *testing.T) {
 func TestGetAllBooksError(t *testing.T) {
 	errExpected := errors.New("error occurred")
 
-	bookServiceTest.getAllBooksRepo = func(filter models.GetBooksFilter) ([]models.Book, error) {
+	bookServiceTest.getAllBooksRepo = func(filter dtos.GetBooksFilter) ([]entities.Book, error) {
 		return nil, errExpected
 	}
 
-	_, err := bookServiceTest.GetAllBooks(models.GetBooksFilter{})
+	_, err := bookServiceTest.GetAllBooks(dtos.GetBooksFilter{})
 
 	require.ErrorIs(t, err, errExpected)
 }
@@ -160,14 +161,14 @@ func TestGetBook(t *testing.T) {
 		authorName        = "joenk"
 		anotherAuthorId   = 7
 		anotherAuthorName = "bruno"
-		authors           = []*models.Author{{Id: authorId, Name: authorName}, {Id: anotherAuthorId, Name: anotherAuthorName}}
+		authors           = []*entities.Author{{Id: authorId, Name: authorName}, {Id: anotherAuthorId, Name: anotherAuthorName}}
 	)
 
 	var bookIdCalledExpected int
 
-	bookServiceTest.getBookRepo = func(id int) (*models.Book, error) {
+	bookServiceTest.getBookRepo = func(id int) (*entities.Book, error) {
 		bookIdCalledExpected = id
-		return &models.Book{Id: bookId, Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: authors}, nil
+		return &entities.Book{Id: bookId, Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: authors}, nil
 	}
 
 	resp, err := bookServiceTest.GetBook(bookId)
@@ -187,7 +188,7 @@ func TestGetBookError(t *testing.T) {
 
 	errExpected := errors.New("error occurred")
 
-	bookServiceTest.getBookRepo = func(id int) (*models.Book, error) {
+	bookServiceTest.getBookRepo = func(id int) (*entities.Book, error) {
 		return nil, errExpected
 	}
 
@@ -201,8 +202,8 @@ func TestGetBookIdNotFound(t *testing.T) {
 		bookId = 1
 	)
 
-	bookServiceTest.getBookRepo = func(id int) (*models.Book, error) {
-		return &models.Book{Id: 0}, nil
+	bookServiceTest.getBookRepo = func(id int) (*entities.Book, error) {
+		return &entities.Book{Id: 0}, nil
 	}
 
 	_, err := bookServiceTest.GetBook(bookId)
@@ -218,28 +219,28 @@ func TestUpdateBook(t *testing.T) {
 		publicationYear = 2022
 		authorId        = 5
 		authorName      = "joenk"
-		authors         = []*models.Author{{Id: authorId, Name: authorName}}
+		authors         = []*entities.Author{{Id: authorId, Name: authorName}}
 	)
 
 	var bookIdCalledExpected int
 
-	bookServiceTest.getBookRepo = func(id int) (*models.Book, error) {
+	bookServiceTest.getBookRepo = func(id int) (*entities.Book, error) {
 		bookIdCalledExpected = id
-		return &models.Book{Id: bookId, Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: authors}, nil
+		return &entities.Book{Id: bookId, Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: authors}, nil
 	}
 
-	bookServiceTest.getAuthorRepo = func(id int) (*models.Author, error) {
+	bookServiceTest.getAuthorRepo = func(id int) (*entities.Author, error) {
 		return authors[0], nil
 	}
 
-	var bookToUpdate *models.Book
+	var bookToUpdate *entities.Book
 
-	bookServiceTest.updateBookRepo = func(book *models.Book, authors []*models.Author) error {
+	bookServiceTest.updateBookRepo = func(book *entities.Book, authors []*entities.Author) error {
 		bookToUpdate = book
 		return nil
 	}
 
-	err := bookServiceTest.UpdateBook(bookId, models.BookRequestCreateUpdate{Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
+	err := bookServiceTest.UpdateBook(bookId, dtos.BookRequestCreateUpdate{Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
 
 	require.NoError(t, err)
 	require.Equal(t, bookIdCalledExpected, bookId)
@@ -262,12 +263,12 @@ func TestUpdateBookErrorOnGetBook(t *testing.T) {
 
 	errExpected := errors.New("error occurred")
 
-	bookServiceTest.getBookRepo = func(id int) (*models.Book, error) {
+	bookServiceTest.getBookRepo = func(id int) (*entities.Book, error) {
 		bookIdCalledExpected = id
 		return nil, errExpected
 	}
 
-	err := bookServiceTest.UpdateBook(bookId, models.BookRequestCreateUpdate{Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
+	err := bookServiceTest.UpdateBook(bookId, dtos.BookRequestCreateUpdate{Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
 
 	require.ErrorIs(t, err, errExpected)
 	require.Equal(t, bookId, bookIdCalledExpected)
@@ -281,23 +282,23 @@ func TestUpdateBookErrorOnGetAuthor(t *testing.T) {
 		publicationYear = 2022
 		authorId        = 5
 		authorName      = "joenk"
-		authors         = []*models.Author{{Id: authorId, Name: authorName}}
+		authors         = []*entities.Author{{Id: authorId, Name: authorName}}
 	)
 
 	var bookIdCalledExpected int
 
-	bookServiceTest.getBookRepo = func(id int) (*models.Book, error) {
+	bookServiceTest.getBookRepo = func(id int) (*entities.Book, error) {
 		bookIdCalledExpected = id
-		return &models.Book{Id: bookId, Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: authors}, nil
+		return &entities.Book{Id: bookId, Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: authors}, nil
 	}
 
 	errExpected := errors.New("error occurred")
 
-	bookServiceTest.getAuthorRepo = func(id int) (*models.Author, error) {
+	bookServiceTest.getAuthorRepo = func(id int) (*entities.Author, error) {
 		return nil, errExpected
 	}
 
-	err := bookServiceTest.UpdateBook(bookId, models.BookRequestCreateUpdate{Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
+	err := bookServiceTest.UpdateBook(bookId, dtos.BookRequestCreateUpdate{Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
 
 	require.ErrorIs(t, err, errExpected)
 	require.Equal(t, bookIdCalledExpected, bookId)
@@ -311,21 +312,21 @@ func TestUpdateBookErrorOnAuthorIdNotFound(t *testing.T) {
 		publicationYear = 2022
 		authorId        = 5
 		authorName      = "joenk"
-		authors         = []*models.Author{{Id: authorId, Name: authorName}}
+		authors         = []*entities.Author{{Id: authorId, Name: authorName}}
 	)
 
 	var bookIdCalledExpected int
 
-	bookServiceTest.getBookRepo = func(id int) (*models.Book, error) {
+	bookServiceTest.getBookRepo = func(id int) (*entities.Book, error) {
 		bookIdCalledExpected = id
-		return &models.Book{Id: bookId, Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: authors}, nil
+		return &entities.Book{Id: bookId, Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: authors}, nil
 	}
 
-	bookServiceTest.getAuthorRepo = func(id int) (*models.Author, error) {
-		return &models.Author{Id: 0}, nil
+	bookServiceTest.getAuthorRepo = func(id int) (*entities.Author, error) {
+		return &entities.Author{Id: 0}, nil
 	}
 
-	err := bookServiceTest.UpdateBook(bookId, models.BookRequestCreateUpdate{Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
+	err := bookServiceTest.UpdateBook(bookId, dtos.BookRequestCreateUpdate{Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
 
 	require.ErrorIs(t, err, utils.ErrAuthorIdNotFound)
 	require.Equal(t, bookIdCalledExpected, bookId)
@@ -339,27 +340,27 @@ func TestUpdateBookErrorOnUpdate(t *testing.T) {
 		publicationYear = 2022
 		authorId        = 5
 		authorName      = "joenk"
-		authors         = []*models.Author{{Id: authorId, Name: authorName}}
+		authors         = []*entities.Author{{Id: authorId, Name: authorName}}
 	)
 
 	var bookIdCalledExpected int
 
-	bookServiceTest.getBookRepo = func(id int) (*models.Book, error) {
+	bookServiceTest.getBookRepo = func(id int) (*entities.Book, error) {
 		bookIdCalledExpected = id
-		return &models.Book{Id: bookId, Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: authors}, nil
+		return &entities.Book{Id: bookId, Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: authors}, nil
 	}
 
-	bookServiceTest.getAuthorRepo = func(id int) (*models.Author, error) {
+	bookServiceTest.getAuthorRepo = func(id int) (*entities.Author, error) {
 		return authors[0], nil
 	}
 
 	errExpected := errors.New("error occurred")
 
-	bookServiceTest.updateBookRepo = func(book *models.Book, authors []*models.Author) error {
+	bookServiceTest.updateBookRepo = func(book *entities.Book, authors []*entities.Author) error {
 		return errExpected
 	}
 
-	err := bookServiceTest.UpdateBook(bookId, models.BookRequestCreateUpdate{Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
+	err := bookServiceTest.UpdateBook(bookId, dtos.BookRequestCreateUpdate{Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
 
 	require.ErrorIs(t, err, errExpected)
 	require.Equal(t, bookIdCalledExpected, bookId)

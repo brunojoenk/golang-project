@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github/brunojoenk/golang-test/models"
+	"github/brunojoenk/golang-test/models/dtos"
 	"github/brunojoenk/golang-test/utils"
 	"net/http"
 	"net/http/httptest"
@@ -35,7 +35,7 @@ func init() {
 }
 
 func TestCreateBook(t *testing.T) {
-	bookControllerTest.createBookRepo = func(bookRequestCreate models.BookRequestCreateUpdate) error {
+	bookControllerTest.createBookRepo = func(bookRequestCreate dtos.BookRequestCreateUpdate) error {
 		return nil
 	}
 
@@ -72,7 +72,7 @@ func TestCreateBookErrorOnBody(t *testing.T) {
 
 func TestCreateBookErrorOnService(t *testing.T) {
 	errExpected := errors.New("error occurred")
-	bookControllerTest.createBookRepo = func(bookRequestCreate models.BookRequestCreateUpdate) error {
+	bookControllerTest.createBookRepo = func(bookRequestCreate dtos.BookRequestCreateUpdate) error {
 		return errExpected
 	}
 
@@ -89,7 +89,7 @@ func TestCreateBookErrorOnService(t *testing.T) {
 
 func TestCreateBookWhenAuthorIdIsNotFound(t *testing.T) {
 
-	bookControllerTest.createBookRepo = func(bookRequestCreate models.BookRequestCreateUpdate) error {
+	bookControllerTest.createBookRepo = func(bookRequestCreate dtos.BookRequestCreateUpdate) error {
 		return utils.ErrAuthorIdNotFound
 	}
 
@@ -115,9 +115,9 @@ func TestGetBook(t *testing.T) {
 
 	var bookIdCalled int
 
-	bookControllerTest.getBookRepo = func(id int) (*models.BookResponse, error) {
+	bookControllerTest.getBookRepo = func(id int) (*dtos.BookResponse, error) {
 		bookIdCalled = id
-		return &models.BookResponse{Name: bookName, Edition: bookEdition, PublicationYear: publicationYear, Authors: authorName}, nil
+		return &dtos.BookResponse{Name: bookName, Edition: bookEdition, PublicationYear: publicationYear, Authors: authorName}, nil
 	}
 
 	request, err := http.NewRequest("GET", "/book/12", nil)
@@ -126,7 +126,7 @@ func TestGetBook(t *testing.T) {
 	e.GET("/book/:id", bookControllerTest.GetBook)
 	e.ServeHTTP(recorder, request)
 
-	books := models.BookResponse{
+	books := dtos.BookResponse{
 		Name: bookName, Edition: bookEdition, PublicationYear: publicationYear, Authors: authorName,
 	}
 	respExpected, _ := json.Marshal(books)
@@ -146,8 +146,8 @@ func TestGetBookErrorParameterId(t *testing.T) {
 		authorName      = "jk rowling"
 	)
 
-	bookControllerTest.getBookRepo = func(id int) (*models.BookResponse, error) {
-		return &models.BookResponse{Name: bookName, Edition: bookEdition, PublicationYear: publicationYear, Authors: authorName}, nil
+	bookControllerTest.getBookRepo = func(id int) (*dtos.BookResponse, error) {
+		return &dtos.BookResponse{Name: bookName, Edition: bookEdition, PublicationYear: publicationYear, Authors: authorName}, nil
 	}
 
 	request, err := http.NewRequest("GET", "/book/a", nil)
@@ -169,7 +169,7 @@ func TestGetBookErrorOnQueryDatabase(t *testing.T) {
 	var bookIdCalled int
 	errExpected := errors.New("error occurred")
 
-	bookControllerTest.getBookRepo = func(id int) (*models.BookResponse, error) {
+	bookControllerTest.getBookRepo = func(id int) (*dtos.BookResponse, error) {
 		bookIdCalled = id
 		return nil, errExpected
 	}
@@ -192,7 +192,7 @@ func TestGetBookErrorWhenAuthorIdNotFound(t *testing.T) {
 
 	var bookIdCalled int
 
-	bookControllerTest.getBookRepo = func(id int) (*models.BookResponse, error) {
+	bookControllerTest.getBookRepo = func(id int) (*dtos.BookResponse, error) {
 		bookIdCalled = id
 		return nil, utils.ErrBookIdNotFound
 	}
@@ -216,9 +216,9 @@ func TestGetAllBook(t *testing.T) {
 		authorName      = "jk rowling"
 	)
 
-	bookControllerTest.getAllBooksRepo = func(filter models.GetBooksFilter) (*models.BookResponseMetadata, error) {
-		return &models.BookResponseMetadata{Books: []models.BookResponse{{Name: bookName, Edition: bookEdition, PublicationYear: publicationYear, Authors: authorName}},
-			Pagination: models.Pagination{Page: 1, Limit: 10}}, nil
+	bookControllerTest.getAllBooksRepo = func(filter dtos.GetBooksFilter) (*dtos.BookResponseMetadata, error) {
+		return &dtos.BookResponseMetadata{Books: []dtos.BookResponse{{Name: bookName, Edition: bookEdition, PublicationYear: publicationYear, Authors: authorName}},
+			Pagination: dtos.Pagination{Page: 1, Limit: 10}}, nil
 	}
 
 	request, err := http.NewRequest("GET", "/books", nil)
@@ -227,7 +227,7 @@ func TestGetAllBook(t *testing.T) {
 	e.GET("/books", bookControllerTest.GetAllBooks)
 	e.ServeHTTP(recorder, request)
 
-	books := &models.BookResponseMetadata{Books: []models.BookResponse{{Name: bookName, Edition: bookEdition, PublicationYear: publicationYear, Authors: authorName}}, Pagination: models.Pagination{Page: 1, Limit: 10}}
+	books := &dtos.BookResponseMetadata{Books: []dtos.BookResponse{{Name: bookName, Edition: bookEdition, PublicationYear: publicationYear, Authors: authorName}}, Pagination: dtos.Pagination{Page: 1, Limit: 10}}
 	respExpected, _ := json.Marshal(books)
 	require.Equal(t, fmt.Sprintf("%s%s", respExpected, "\n"), recorder.Body.String())
 
@@ -244,9 +244,9 @@ func TestGetAllBookErrorOnFilter(t *testing.T) {
 		authorName      = "jk rowling"
 	)
 
-	bookControllerTest.getAllBooksRepo = func(filter models.GetBooksFilter) (*models.BookResponseMetadata, error) {
-		return &models.BookResponseMetadata{Books: []models.BookResponse{{Name: bookName, Edition: bookEdition, PublicationYear: publicationYear, Authors: authorName}},
-			Pagination: models.Pagination{Page: 1, Limit: 10}}, nil
+	bookControllerTest.getAllBooksRepo = func(filter dtos.GetBooksFilter) (*dtos.BookResponseMetadata, error) {
+		return &dtos.BookResponseMetadata{Books: []dtos.BookResponse{{Name: bookName, Edition: bookEdition, PublicationYear: publicationYear, Authors: authorName}},
+			Pagination: dtos.Pagination{Page: 1, Limit: 10}}, nil
 	}
 
 	request, _ := http.NewRequest("GET", "/books?publication_year=joenk", nil)
@@ -261,7 +261,7 @@ func TestGetAllBookErrorOnFilter(t *testing.T) {
 
 func TestGetAllBookErrorOnService(t *testing.T) {
 	errExpected := errors.New("error occurred")
-	bookControllerTest.getAllBooksRepo = func(filter models.GetBooksFilter) (*models.BookResponseMetadata, error) {
+	bookControllerTest.getAllBooksRepo = func(filter dtos.GetBooksFilter) (*dtos.BookResponseMetadata, error) {
 		return nil, errExpected
 	}
 
@@ -348,7 +348,7 @@ func TestUpdateBook(t *testing.T) {
 
 	var bookIdCalled int
 
-	bookControllerTest.updateBookRepo = func(id int, bookRequestUpdate models.BookRequestCreateUpdate) error {
+	bookControllerTest.updateBookRepo = func(id int, bookRequestUpdate dtos.BookRequestCreateUpdate) error {
 		bookIdCalled = id
 		return nil
 	}
@@ -367,7 +367,7 @@ func TestUpdateBook(t *testing.T) {
 
 func TestUpdateBookErrorOnParametersIdNotFound(t *testing.T) {
 
-	bookControllerTest.updateBookRepo = func(id int, bookRequestUpdate models.BookRequestCreateUpdate) error {
+	bookControllerTest.updateBookRepo = func(id int, bookRequestUpdate dtos.BookRequestCreateUpdate) error {
 		return nil
 	}
 
@@ -400,7 +400,7 @@ func TestUpdateBookErrorOnBody(t *testing.T) {
 
 func TestUpdateBookErrorOnService(t *testing.T) {
 
-	bookControllerTest.updateBookRepo = func(id int, bookRequestUpdate models.BookRequestCreateUpdate) error {
+	bookControllerTest.updateBookRepo = func(id int, bookRequestUpdate dtos.BookRequestCreateUpdate) error {
 		return errors.New("error occurred")
 	}
 
@@ -417,7 +417,7 @@ func TestUpdateBookErrorOnService(t *testing.T) {
 
 func TestUpdateBookErrorWhenAuthorIdNotFound(t *testing.T) {
 
-	bookControllerTest.updateBookRepo = func(id int, bookRequestUpdate models.BookRequestCreateUpdate) error {
+	bookControllerTest.updateBookRepo = func(id int, bookRequestUpdate dtos.BookRequestCreateUpdate) error {
 		return utils.ErrAuthorIdNotFound
 	}
 

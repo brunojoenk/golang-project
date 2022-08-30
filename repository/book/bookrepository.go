@@ -1,7 +1,8 @@
 package repository
 
 import (
-	"github/brunojoenk/golang-test/models"
+	"github/brunojoenk/golang-test/models/dtos"
+	"github/brunojoenk/golang-test/models/entities"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -20,7 +21,7 @@ func NewBookRepository(db *gorm.DB) *BookRepository {
 }
 
 // Create book
-func (b *BookRepository) CreateBook(book *models.Book) error {
+func (b *BookRepository) CreateBook(book *entities.Book) error {
 
 	if result := b.db.Create(&book); result.Error != nil {
 		log.Error("Error on create book: ", result.Error.Error())
@@ -30,7 +31,7 @@ func (b *BookRepository) CreateBook(book *models.Book) error {
 	return nil
 }
 
-func (b *BookRepository) UpdateBook(book *models.Book, authors []*models.Author) error {
+func (b *BookRepository) UpdateBook(book *entities.Book, authors []*entities.Author) error {
 
 	if err := b.db.Model(&book).Association("Authors").Clear(); err != nil {
 		log.Error("Error on clear authors from book: ", err.Error())
@@ -47,8 +48,8 @@ func (b *BookRepository) UpdateBook(book *models.Book, authors []*models.Author)
 	return nil
 }
 
-func (b *BookRepository) GetBook(id int) (*models.Book, error) {
-	var book models.Book
+func (b *BookRepository) GetBook(id int) (*entities.Book, error) {
+	var book entities.Book
 
 	if result := b.db.Preload("Authors").First(&book, id); result.Error != nil {
 		log.Error("Error on preload authors from book: ", result.Error.Error())
@@ -59,9 +60,9 @@ func (b *BookRepository) GetBook(id int) (*models.Book, error) {
 }
 
 // Get books
-func (b *BookRepository) GetAllBooks(filter models.GetBooksFilter) ([]models.Book, error) {
+func (b *BookRepository) GetAllBooks(filter dtos.GetBooksFilter) ([]entities.Book, error) {
 
-	var books []models.Book
+	var books []entities.Book
 	toExec := b.db
 
 	if strings.TrimSpace(filter.Author) != "" {
@@ -94,7 +95,7 @@ func (b *BookRepository) GetAllBooks(filter models.GetBooksFilter) ([]models.Boo
 }
 
 func (b *BookRepository) DeleteBook(id int) error {
-	var book models.Book
+	var book entities.Book
 
 	if result := b.db.First(&book, id); result.Error != nil {
 		log.Error("Error on get book to delete: ", result.Error.Error())

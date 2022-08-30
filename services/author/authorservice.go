@@ -2,7 +2,8 @@ package services
 
 import (
 	"encoding/csv"
-	"github/brunojoenk/golang-test/models"
+	"github/brunojoenk/golang-test/models/dtos"
+	"github/brunojoenk/golang-test/models/entities"
 	authorrepo "github/brunojoenk/golang-test/repository/author"
 	"os"
 
@@ -10,8 +11,8 @@ import (
 	"gorm.io/gorm"
 )
 
-type GetAllAuthors func(filter models.GetAuthorsFilter) ([]models.Author, error)
-type CreateAuthorInBatch func(author []*models.Author, batchSize int) error
+type GetAllAuthors func(filter dtos.GetAuthorsFilter) ([]entities.Author, error)
+type CreateAuthorInBatch func(author []*entities.Author, batchSize int) error
 
 type AuthorService struct {
 	getAllAuthorsRepository GetAllAuthors
@@ -24,7 +25,7 @@ func NewAuthorService(db *gorm.DB) *AuthorService {
 	return &AuthorService{getAllAuthorsRepository: repo.GetAllAuthors, createAuthorInBatchRepo: repo.CreateAuthorInBatch}
 }
 
-func (a *AuthorService) GetAllAuthors(filter models.GetAuthorsFilter) (*models.AuthorResponseMetadata, error) {
+func (a *AuthorService) GetAllAuthors(filter dtos.GetAuthorsFilter) (*dtos.AuthorResponseMetadata, error) {
 
 	filter.Pagination.ValidValuesAndSetDefault()
 	authors, err := a.getAllAuthorsRepository(filter)
@@ -33,16 +34,16 @@ func (a *AuthorService) GetAllAuthors(filter models.GetAuthorsFilter) (*models.A
 		return nil, err
 	}
 
-	authorsResponse := make([]models.AuthorResponse, 0)
+	authorsResponse := make([]dtos.AuthorResponse, 0)
 	for _, a := range authors {
-		authorResponse := &models.AuthorResponse{
+		authorResponse := &dtos.AuthorResponse{
 			Id:   a.Id,
 			Name: a.Name,
 		}
 		authorsResponse = append(authorsResponse, *authorResponse)
 	}
 
-	authorResponseMetada := &models.AuthorResponseMetadata{
+	authorResponseMetada := &dtos.AuthorResponseMetadata{
 		Authors:    authorsResponse,
 		Pagination: filter.Pagination,
 	}
@@ -78,12 +79,12 @@ func (a *AuthorService) ImportAuthorsFromCSVFile(file string) ([]string, error) 
 
 	for _, record := range records {
 		count := 0
-		var batch []*models.Author
+		var batch []*entities.Author
 		for i, name := range record {
 			if !mapper[name] {
 				mapper[name] = true
 				count++
-				batch = append(batch, &models.Author{Name: name})
+				batch = append(batch, &entities.Author{Name: name})
 				names = append(names, name)
 			}
 			if count == batchSize || i == (len(record)-1) {
@@ -92,7 +93,7 @@ func (a *AuthorService) ImportAuthorsFromCSVFile(file string) ([]string, error) 
 					log.Error("Error on create author in batch repository: ", err.Error())
 					return nil, err
 				}
-				batch = make([]*models.Author, 0)
+				batch = make([]*entities.Author, 0)
 				count = 0
 			}
 

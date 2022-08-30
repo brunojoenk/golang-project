@@ -3,7 +3,8 @@ package controllers
 import (
 	"errors"
 	"fmt"
-	"github/brunojoenk/golang-test/models"
+	"github/brunojoenk/golang-test/models/dtos"
+
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -39,9 +40,9 @@ func TestGetAllAuthors(t *testing.T) {
 	var (
 		authorId   = 8
 		authorName = "bruno"
-		authors    = models.AuthorResponseMetadata{Authors: []models.AuthorResponse{{Id: authorId, Name: authorName}}, Pagination: models.Pagination{Page: 1, Limit: 10}}
+		authors    = dtos.AuthorResponseMetadata{Authors: []dtos.AuthorResponse{{Id: authorId, Name: authorName}}, Pagination: dtos.Pagination{Page: 1, Limit: 10}}
 	)
-	authorControllerTest.getAllAuthorsRepo = func(filter models.GetAuthorsFilter) (*models.AuthorResponseMetadata, error) {
+	authorControllerTest.getAllAuthorsRepo = func(filter dtos.GetAuthorsFilter) (*dtos.AuthorResponseMetadata, error) {
 		return &authors, nil
 	}
 
@@ -76,7 +77,7 @@ func TestGetAllAuthorsErrorOnFilter(t *testing.T) {
 
 func TestGetAllAuthorsErrorOnService(t *testing.T) {
 	errExpected := errors.New("error occurred")
-	authorControllerTest.getAllAuthorsRepo = func(filter models.GetAuthorsFilter) (*models.AuthorResponseMetadata, error) {
+	authorControllerTest.getAllAuthorsRepo = func(filter dtos.GetAuthorsFilter) (*dtos.AuthorResponseMetadata, error) {
 		return nil, errExpected
 	}
 

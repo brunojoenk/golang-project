@@ -1,7 +1,8 @@
 package repository
 
 import (
-	"github/brunojoenk/golang-test/models"
+	"github/brunojoenk/golang-test/models/dtos"
+	"github/brunojoenk/golang-test/models/entities"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -18,7 +19,7 @@ func NewAuthorRepository(d *gorm.DB) *AuthorRepository {
 	return &AuthorRepository{db: d}
 }
 
-func (a *AuthorRepository) CreateAuthorInBatch(author []*models.Author, batchSize int) error {
+func (a *AuthorRepository) CreateAuthorInBatch(author []*entities.Author, batchSize int) error {
 
 	if result := a.db.CreateInBatches(author, batchSize); result.Error != nil {
 		log.Error("Error on create authors in batch: ", result.Error.Error())
@@ -28,9 +29,9 @@ func (a *AuthorRepository) CreateAuthorInBatch(author []*models.Author, batchSiz
 	return nil
 }
 
-func (a *AuthorRepository) GetAuthor(id int) (*models.Author, error) {
+func (a *AuthorRepository) GetAuthor(id int) (*entities.Author, error) {
 
-	var author models.Author
+	var author entities.Author
 
 	if result := a.db.Find(&author, id); result.Error != nil {
 		log.Error("Error on get author: ", result.Error.Error())
@@ -41,9 +42,9 @@ func (a *AuthorRepository) GetAuthor(id int) (*models.Author, error) {
 }
 
 // Get authors
-func (a *AuthorRepository) GetAllAuthors(filter models.GetAuthorsFilter) ([]models.Author, error) {
+func (a *AuthorRepository) GetAllAuthors(filter dtos.GetAuthorsFilter) ([]entities.Author, error) {
 
-	var authors []models.Author
+	var authors []entities.Author
 	toExec := a.db
 
 	if strings.TrimSpace(filter.Name) != "" {

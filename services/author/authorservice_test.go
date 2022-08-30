@@ -2,7 +2,8 @@ package services
 
 import (
 	"errors"
-	"github/brunojoenk/golang-test/models"
+	"github/brunojoenk/golang-test/models/dtos"
+	"github/brunojoenk/golang-test/models/entities"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -30,29 +31,29 @@ func init() {
 
 func TestGetAllAuthors(t *testing.T) {
 
-	authorServiceTest.getAllAuthorsRepository = func(filter models.GetAuthorsFilter) ([]models.Author, error) {
-		return []models.Author{{Id: 5, Name: "Joenk"}}, nil
+	authorServiceTest.getAllAuthorsRepository = func(filter dtos.GetAuthorsFilter) ([]entities.Author, error) {
+		return []entities.Author{{Id: 5, Name: "Joenk"}}, nil
 	}
 
-	resp, err := authorServiceTest.GetAllAuthors(models.GetAuthorsFilter{})
+	resp, err := authorServiceTest.GetAllAuthors(dtos.GetAuthorsFilter{})
 	require.NoError(t, err)
-	require.Nil(t, deep.Equal([]models.AuthorResponse{{Id: 5, Name: "Joenk"}}, resp.Authors))
+	require.Nil(t, deep.Equal([]dtos.AuthorResponse{{Id: 5, Name: "Joenk"}}, resp.Authors))
 	require.Equal(t, resp.Pagination.Limit, 10)
 	require.Equal(t, resp.Pagination.Page, 1)
 }
 
 func TestGetAllAuthorsError(t *testing.T) {
 
-	authorServiceTest.getAllAuthorsRepository = func(filter models.GetAuthorsFilter) ([]models.Author, error) {
+	authorServiceTest.getAllAuthorsRepository = func(filter dtos.GetAuthorsFilter) ([]entities.Author, error) {
 		return nil, errors.New("Error on test")
 	}
 
-	_, err := authorServiceTest.GetAllAuthors(models.GetAuthorsFilter{})
+	_, err := authorServiceTest.GetAllAuthors(dtos.GetAuthorsFilter{})
 	require.Error(t, err)
 }
 
 func TestImportAuthorsFromCSVFile(t *testing.T) {
-	authorServiceTest.createAuthorInBatchRepo = func(author []*models.Author, batchSize int) error {
+	authorServiceTest.createAuthorInBatchRepo = func(author []*entities.Author, batchSize int) error {
 		return nil
 	}
 	resp, err := authorServiceTest.ImportAuthorsFromCSVFile("../../data/authorsreduced.csv")
@@ -61,7 +62,7 @@ func TestImportAuthorsFromCSVFile(t *testing.T) {
 }
 
 func TestImportAuthorsFromCSVFileErronOnCreateAuthorInBatch(t *testing.T) {
-	authorServiceTest.createAuthorInBatchRepo = func(author []*models.Author, batchSize int) error {
+	authorServiceTest.createAuthorInBatchRepo = func(author []*entities.Author, batchSize int) error {
 		return errors.New("error occurred")
 	}
 	resp, err := authorServiceTest.ImportAuthorsFromCSVFile("../../data/authorsreduced.csv")

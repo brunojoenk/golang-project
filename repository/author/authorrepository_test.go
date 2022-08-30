@@ -3,7 +3,8 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"github/brunojoenk/golang-test/models"
+	"github/brunojoenk/golang-test/models/dtos"
+	"github/brunojoenk/golang-test/models/entities"
 	"regexp"
 	"testing"
 
@@ -67,7 +68,7 @@ func (s *Suite) Test_repository_Get_Author() {
 	res, err := s.repository.GetAuthor(id)
 
 	require.NoError(s.T(), err)
-	require.Nil(s.T(), deep.Equal(&models.Author{Id: id, Name: name}, res))
+	require.Nil(s.T(), deep.Equal(&entities.Author{Id: id, Name: name}, res))
 }
 
 func (s *Suite) Test_repository_Get_Author_Error() {
@@ -92,10 +93,10 @@ func (s *Suite) Test_repository_Get_All_Authors() {
 		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).
 			AddRow(id, name))
 
-	res, err := s.repository.GetAllAuthors(models.GetAuthorsFilter{})
+	res, err := s.repository.GetAllAuthors(dtos.GetAuthorsFilter{})
 
 	require.NoError(s.T(), err)
-	require.Nil(s.T(), deep.Equal([]models.Author{{Id: id, Name: name}}, res))
+	require.Nil(s.T(), deep.Equal([]entities.Author{{Id: id, Name: name}}, res))
 }
 
 func (s *Suite) Test_repository_Get_All_Authors_Error() {
@@ -104,7 +105,7 @@ func (s *Suite) Test_repository_Get_All_Authors_Error() {
 		`SELECT * FROM "authors"`)).
 		WillReturnError(context.Canceled)
 
-	_, err := s.repository.GetAllAuthors(models.GetAuthorsFilter{})
+	_, err := s.repository.GetAllAuthors(dtos.GetAuthorsFilter{})
 
 	require.Error(s.T(), err)
 
@@ -121,10 +122,10 @@ func (s *Suite) Test_repository_Get_All_Authors_Filter_Name() {
 		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).
 			AddRow(id, name))
 
-	res, err := s.repository.GetAllAuthors(models.GetAuthorsFilter{Name: name})
+	res, err := s.repository.GetAllAuthors(dtos.GetAuthorsFilter{Name: name})
 
 	require.NoError(s.T(), err)
-	require.Nil(s.T(), deep.Equal([]models.Author{{Id: id, Name: name}}, res))
+	require.Nil(s.T(), deep.Equal([]entities.Author{{Id: id, Name: name}}, res))
 }
 
 func (s *Suite) Test_repository_Create_Author() {
@@ -142,7 +143,7 @@ func (s *Suite) Test_repository_Create_Author() {
 			AddRow(id))
 	s.mock.ExpectCommit()
 
-	err := s.repository.CreateAuthorInBatch([]*models.Author{{Name: name}}, 1)
+	err := s.repository.CreateAuthorInBatch([]*entities.Author{{Name: name}}, 1)
 
 	require.NoError(s.T(), err)
 }
@@ -161,7 +162,7 @@ func (s *Suite) Test_repository_Create_Author_Error() {
 
 	s.mock.ExpectRollback()
 
-	err := s.repository.CreateAuthorInBatch([]*models.Author{{Name: name}}, 1)
+	err := s.repository.CreateAuthorInBatch([]*entities.Author{{Name: name}}, 1)
 
 	require.Error(s.T(), err)
 }

@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"fmt"
-	"github/brunojoenk/golang-test/models"
+	"github/brunojoenk/golang-test/models/dtos"
 	services "github/brunojoenk/golang-test/services/book"
 	"github/brunojoenk/golang-test/utils"
 	"net/http"
@@ -14,11 +14,11 @@ import (
 	"gorm.io/gorm"
 )
 
-type CreateBook func(bookRequestCreate models.BookRequestCreateUpdate) error
-type GetAllBooks func(filter models.GetBooksFilter) (*models.BookResponseMetadata, error)
+type CreateBook func(bookRequestCreate dtos.BookRequestCreateUpdate) error
+type GetAllBooks func(filter dtos.GetBooksFilter) (*dtos.BookResponseMetadata, error)
 type DeleteBook func(id int) error
-type GetBook func(id int) (*models.BookResponse, error)
-type UpdateBook func(id int, bookRequestUpdate models.BookRequestCreateUpdate) error
+type GetBook func(id int) (*dtos.BookResponse, error)
+type UpdateBook func(id int, bookRequestUpdate dtos.BookRequestCreateUpdate) error
 
 type BookController struct {
 	createBookRepo  CreateBook
@@ -44,14 +44,14 @@ func NewBookController(db *gorm.DB) *BookController {
 // @Tags Books
 // @Accept json
 // @Produce json
-// @Param request body models.BookRequestCreateUpdate true "query params"
+// @Param request body dtos.BookRequestCreateUpdate true "query params"
 // @Success 200 {object} string
 // @Failure 400 {object} string
 // @Failure 500 {object} string
 // @Router /book [post]
 func (b *BookController) CreateBook(c echo.Context) error {
 
-	bookRequestCreate := new(models.BookRequestCreateUpdate)
+	bookRequestCreate := new(dtos.BookRequestCreateUpdate)
 	if err := c.Bind(bookRequestCreate); err != nil {
 		c.Logger().Warn("Error on bind body to create book: %s", err.Error())
 		return c.JSON(http.StatusBadRequest, fmt.Sprintf("Request body to crate a book is invalid: %s", err.Error()))
@@ -83,12 +83,12 @@ func (b *BookController) CreateBook(c echo.Context) error {
 // @Param   author     query     string     false  "search book by author"     example(string)
 // @Param   page     query     int     false  "page list"     example(1) minimum(1)
 // @Param   limit     query     int     false  "page size"     example(1) minimum(1)
-// @Success 200 {object} models.AuthorResponseMetadata
+// @Success 200 {object} dtos.AuthorResponseMetadata
 // @Failure 400 {object} string
 // @Failure 500 {object} string
 // @Router /books [get]
 func (b *BookController) GetAllBooks(c echo.Context) error {
-	var filter models.GetBooksFilter
+	var filter dtos.GetBooksFilter
 	err := c.Bind(&filter)
 	if err != nil {
 		c.Logger().Warn("Error on bind query to filter all books: %s", err.Error())
@@ -146,7 +146,7 @@ func (b *BookController) DeleteBook(c echo.Context) error {
 // @Accept */*
 // @Produce json
 // @Param id   path int true "Book ID"
-// @Success 200 {object} models.BookResponse
+// @Success 200 {object} dtos.BookResponse
 // @Failure 400 {object} string
 // @Failure 500 {object} string
 // @Router /book/{id} [get]
@@ -180,7 +180,7 @@ func (b *BookController) GetBook(c echo.Context) error {
 // @Accept */*
 // @Produce json
 // @Param id   path int true "Book ID"
-// @Param request body models.BookRequestCreateUpdate true "query params"
+// @Param request body dtos.BookRequestCreateUpdate true "query params"
 // @Success 200 {object} string
 // @Failure 400 {object} string
 // @Failure 500 {object} string
@@ -194,7 +194,7 @@ func (b *BookController) UpdateBook(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, "Invalid query parameter id")
 	}
 
-	bookRequestUpdate := new(models.BookRequestCreateUpdate)
+	bookRequestUpdate := new(dtos.BookRequestCreateUpdate)
 	if err := c.Bind(bookRequestUpdate); err != nil {
 		c.Logger().Warn("Error on parse body on update book %s", err.Error())
 		return c.JSON(http.StatusBadRequest, fmt.Sprintf("Error on parse body to update book: %s", err.Error()))

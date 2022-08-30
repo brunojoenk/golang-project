@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"fmt"
-	"github/brunojoenk/golang-test/models"
+	"github/brunojoenk/golang-test/models/dtos"
 	services "github/brunojoenk/golang-test/services/author"
 	"net/http"
 	"os"
@@ -13,7 +13,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type GetAllAuthors func(filter models.GetAuthorsFilter) (*models.AuthorResponseMetadata, error)
+type GetAllAuthors func(filter dtos.GetAuthorsFilter) (*dtos.AuthorResponseMetadata, error)
 type ImportAuthorsFromCSVFile func(file string) ([]string, error)
 
 type AuthorController struct {
@@ -38,13 +38,13 @@ func NewAuthorController(d *gorm.DB) *AuthorController {
 // @Param   name     query     string     false  "search authors by name"     example(string)
 // @Param   page     query     int     false  "page list"     example(1) minimum(1)
 // @Param   limit     query     int     false  "page size"     example(1) minimum(1)
-// @Success 200 {object} models.AuthorResponseMetadata
+// @Success 200 {object} dtos.AuthorResponseMetadata
 // @Failure 400 {object} string
 // @Failure 500 {object} string
 // @Router /authors [get]
 func (a *AuthorController) GetAllAuthors(c echo.Context) error {
 
-	var filter models.GetAuthorsFilter
+	var filter dtos.GetAuthorsFilter
 	err := c.Bind(&filter)
 	if err != nil {
 		c.Logger().Warn("Error on bind query to filter author: %s", err.Error())
@@ -68,7 +68,7 @@ func (a *AuthorController) GetAllAuthors(c echo.Context) error {
 // @Tags Authors
 // @Accept */*
 // @Produce json
-// @Success 200 {array} models.AuthorResponseMetadata
+// @Success 200 {array} dtos.AuthorResponseMetadata
 // @Router /authors/import [post]
 func (a *AuthorController) ReadCsvHandler(c echo.Context) error {
 
@@ -82,7 +82,7 @@ func (a *AuthorController) ReadCsvHandler(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, fmt.Sprintf("Error on import authors: %s", err.Error()))
 	}
-	return c.JSON(http.StatusOK, models.AuthorImportResponse{
+	return c.JSON(http.StatusOK, dtos.AuthorImportResponse{
 		Msg:   "Authors imported",
 		Names: names,
 	})
