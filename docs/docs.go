@@ -358,7 +358,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dtos.AuthorResponseMetadata"
+                            "$ref": "#/definitions/dtos.BookResponseMetadata"
                         }
                     },
                     "400": {
@@ -432,11 +432,28 @@ const docTemplate = `{
                 "edition": {
                     "type": "string"
                 },
+                "id": {
+                    "type": "integer"
+                },
                 "name": {
                     "type": "string"
                 },
                 "publication_year": {
                     "type": "integer"
+                }
+            }
+        },
+        "dtos.BookResponseMetadata": {
+            "type": "object",
+            "properties": {
+                "books": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dtos.BookResponse"
+                    }
+                },
+                "pagination": {
+                    "$ref": "#/definitions/dtos.Pagination"
                 }
             }
         },
