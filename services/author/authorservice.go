@@ -74,7 +74,6 @@ func (a *AuthorService) ImportAuthorsFromCSVFile(file string) ([]string, error) 
 
 	names := make([]string, 0)
 	mapper := make(map[string]bool, 0)
-
 	batchSize := 2000
 
 	for _, record := range records {
