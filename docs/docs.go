@@ -432,6 +432,9 @@ const docTemplate = `{
                 "edition": {
                     "type": "string"
                 },
+                "id": {
+                    "type": "integer"
+                },
                 "name": {
                     "type": "string"
                 },

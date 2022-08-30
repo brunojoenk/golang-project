@@ -83,7 +83,7 @@ func (b *BookController) CreateBook(c echo.Context) error {
 // @Param   author     query     string     false  "search book by author"     example(string)
 // @Param   page     query     int     false  "page list"     example(1) minimum(1)
 // @Param   limit     query     int     false  "page size"     example(1) minimum(1)
-// @Success 200 {object} dtos.AuthorResponseMetadata
+// @Success 200 {object} dtos.BookResponseMetadata
 // @Failure 400 {object} string
 // @Failure 500 {object} string
 // @Router /books [get]
