@@ -89,6 +89,7 @@ func (b *BookService) GetAllBooks(filter dtos.GetBooksFilter) (*dtos.BookRespons
 		}
 
 		bookResponse := &dtos.BookResponse{
+			Id:              book.Id,
 			Name:            book.Name,
 			Edition:         book.Edition,
 			PublicationYear: book.PublicationYear,
@@ -132,6 +133,7 @@ func (b *BookService) GetBook(id int) (*dtos.BookResponse, error) {
 	}
 
 	bookResponse := dtos.BookResponse{
+		Id:              book.Id,
 		Name:            book.Name,
 		Edition:         book.Edition,
 		PublicationYear: book.PublicationYear,

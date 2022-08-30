@@ -23,6 +23,7 @@ type BookResponseMetadata struct {
 }
 
 type BookResponse struct {
+	Id              int    `json:"id"`
 	Name            string `json:"name"`
 	Edition         string `json:"edition"`
 	PublicationYear int    `json:"publication_year"`
