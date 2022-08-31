@@ -41,7 +41,6 @@ func (a *AuthorRepository) GetAuthor(id int) (*entities.Author, error) {
 	return &author, nil
 }
 
-// Get authors
 func (a *AuthorRepository) GetAllAuthors(filter dtos.GetAuthorsFilter) ([]entities.Author, error) {
 
 	var authors []entities.Author

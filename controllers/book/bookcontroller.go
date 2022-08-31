@@ -3,7 +3,7 @@ package controllers
 import (
 	"fmt"
 	"github/brunojoenk/golang-test/models/dtos"
-	services "github/brunojoenk/golang-test/services/book"
+	bookservice "github/brunojoenk/golang-test/services/book"
 	"github/brunojoenk/golang-test/utils"
 	"net/http"
 	"strconv"
@@ -30,7 +30,7 @@ type BookController struct {
 
 // NewBookController Controller Constructor
 func NewBookController(db *gorm.DB) *BookController {
-	repo := services.NewBookService(db)
+	repo := bookservice.NewBookService(db)
 	return &BookController{createBookRepo: repo.CreateBook,
 		getAllBooksRepo: repo.GetAllBooks,
 		deleteBookRepo:  repo.DeleteBook,
@@ -45,7 +45,7 @@ func NewBookController(db *gorm.DB) *BookController {
 // @Accept json
 // @Produce json
 // @Param request body dtos.BookRequestCreateUpdate true "query params"
-// @Success 200 {object} string
+// @Success 201 {object} string
 // @Failure 400 {object} string
 // @Failure 500 {object} string
 // @Router /book [post]
@@ -67,7 +67,6 @@ func (b *BookController) CreateBook(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, "Error on create book. Please, contact system admin")
 	}
 
-	// Return status 200 OK.
 	return c.JSON(http.StatusCreated, "Created")
 }
 
@@ -95,7 +94,6 @@ func (b *BookController) GetAllBooks(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, fmt.Sprintf("Invalid query parameters: %s", err.Error()))
 	}
 
-	// Get all books.
 	booksResponse, err := b.getAllBooksRepo(filter)
 
 	if err != nil {
@@ -103,7 +101,6 @@ func (b *BookController) GetAllBooks(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, "Error on get all books. Please, contact admin")
 	}
 
-	// Return status 200 OK.
 	return c.JSON(http.StatusOK, booksResponse)
 }
 
@@ -119,7 +116,6 @@ func (b *BookController) GetAllBooks(c echo.Context) error {
 // @Failure 500 {object} string
 // @Router /book/{id} [delete]
 func (b *BookController) DeleteBook(c echo.Context) error {
-	// Read the dynamic id parameter
 
 	id, err := strconv.Atoi(c.Param("id"))
 
@@ -128,7 +124,6 @@ func (b *BookController) DeleteBook(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, "Invalid query parameter id")
 	}
 
-	// Call repository to delete book
 	err = b.deleteBookRepo(id)
 
 	if err != nil {
@@ -151,7 +146,7 @@ func (b *BookController) DeleteBook(c echo.Context) error {
 // @Failure 500 {object} string
 // @Router /book/{id} [get]
 func (b *BookController) GetBook(c echo.Context) error {
-	// Read the dynamic id parameter
+
 	id, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
@@ -159,7 +154,6 @@ func (b *BookController) GetBook(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, "Invalid query parameter id")
 	}
 
-	// Find the book by Id
 	bookResponse, err := b.getBookRepo(id)
 
 	if err != nil {
@@ -186,7 +180,7 @@ func (b *BookController) GetBook(c echo.Context) error {
 // @Failure 500 {object} string
 // @Router /book/{id} [put]
 func (b *BookController) UpdateBook(c echo.Context) error {
-	// Read dynamic id parameter
+
 	id, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {

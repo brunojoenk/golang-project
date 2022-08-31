@@ -56,7 +56,6 @@ func (b *BookService) CreateBook(bookRequestCreate dtos.BookRequestCreateUpdate)
 		authors = append(authors, author)
 	}
 
-	// Create book.
 	book := entities.Book{
 		Name:            bookRequestCreate.Name,
 		Edition:         bookRequestCreate.Edition,
