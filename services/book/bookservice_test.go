@@ -50,7 +50,7 @@ func TestCreateBook(t *testing.T) {
 		return nil
 	}
 
-	err := bookServiceTest.CreateBook(dtos.BookRequestCreateUpdate{Name: name, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
+	err := bookServiceTest.CreateBook(dtos.BookRequestCreate{Name: name, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
 
 	require.NoError(t, err)
 	require.Equal(t, bookToCreate.Name, name)
@@ -73,7 +73,7 @@ func TestCreateBook_Error(t *testing.T) {
 		return nil, errExpected
 	}
 
-	err := bookServiceTest.CreateBook(dtos.BookRequestCreateUpdate{Name: name, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
+	err := bookServiceTest.CreateBook(dtos.BookRequestCreate{Name: name, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
 
 	require.ErrorIs(t, err, errExpected)
 }
@@ -90,7 +90,7 @@ func TestCreateBook_Error_Whens_Is_Author_Id_Not_Found(t *testing.T) {
 		return &entities.Author{Id: 0}, nil
 	}
 
-	err := bookServiceTest.CreateBook(dtos.BookRequestCreateUpdate{Name: name, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
+	err := bookServiceTest.CreateBook(dtos.BookRequestCreate{Name: name, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
 
 	require.ErrorIs(t, err, utils.ErrAuthorIdNotFound)
 }
@@ -240,7 +240,7 @@ func TestUpdateBook(t *testing.T) {
 		return nil
 	}
 
-	err := bookServiceTest.UpdateBook(bookId, dtos.BookRequestCreateUpdate{Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
+	err := bookServiceTest.UpdateBook(bookId, dtos.BookRequestUpdate{Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
 
 	require.NoError(t, err)
 	require.Equal(t, bookIdCalledExpected, bookId)
@@ -268,7 +268,7 @@ func TestUpdateBookErrorOnGetBook(t *testing.T) {
 		return nil, errExpected
 	}
 
-	err := bookServiceTest.UpdateBook(bookId, dtos.BookRequestCreateUpdate{Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
+	err := bookServiceTest.UpdateBook(bookId, dtos.BookRequestUpdate{Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
 
 	require.ErrorIs(t, err, errExpected)
 	require.Equal(t, bookId, bookIdCalledExpected)
@@ -298,7 +298,7 @@ func TestUpdateBookErrorOnGetAuthor(t *testing.T) {
 		return nil, errExpected
 	}
 
-	err := bookServiceTest.UpdateBook(bookId, dtos.BookRequestCreateUpdate{Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
+	err := bookServiceTest.UpdateBook(bookId, dtos.BookRequestUpdate{Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
 
 	require.ErrorIs(t, err, errExpected)
 	require.Equal(t, bookIdCalledExpected, bookId)
@@ -326,7 +326,7 @@ func TestUpdateBookErrorOnAuthorIdNotFound(t *testing.T) {
 		return &entities.Author{Id: 0}, nil
 	}
 
-	err := bookServiceTest.UpdateBook(bookId, dtos.BookRequestCreateUpdate{Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
+	err := bookServiceTest.UpdateBook(bookId, dtos.BookRequestUpdate{Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
 
 	require.ErrorIs(t, err, utils.ErrAuthorIdNotFound)
 	require.Equal(t, bookIdCalledExpected, bookId)
@@ -360,7 +360,7 @@ func TestUpdateBookErrorOnUpdate(t *testing.T) {
 		return errExpected
 	}
 
-	err := bookServiceTest.UpdateBook(bookId, dtos.BookRequestCreateUpdate{Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
+	err := bookServiceTest.UpdateBook(bookId, dtos.BookRequestUpdate{Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
 
 	require.ErrorIs(t, err, errExpected)
 	require.Equal(t, bookIdCalledExpected, bookId)

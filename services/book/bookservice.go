@@ -42,7 +42,7 @@ func NewBookService(db *gorm.DB) *BookService {
 	}
 }
 
-func (b *BookService) CreateBook(bookRequestCreate dtos.BookRequestCreateUpdate) error {
+func (b *BookService) CreateBook(bookRequestCreate dtos.BookRequestCreate) error {
 	var authors []*entities.Author
 	for _, authorId := range bookRequestCreate.Authors {
 		author, err := b.getAuthorRepo(authorId)
@@ -56,7 +56,6 @@ func (b *BookService) CreateBook(bookRequestCreate dtos.BookRequestCreateUpdate)
 		authors = append(authors, author)
 	}
 
-	// Create book.
 	book := entities.Book{
 		Name:            bookRequestCreate.Name,
 		Edition:         bookRequestCreate.Edition,
@@ -143,7 +142,7 @@ func (b *BookService) GetBook(id int) (*dtos.BookResponse, error) {
 	return &bookResponse, nil
 }
 
-func (b *BookService) UpdateBook(id int, bookRequestUpdate dtos.BookRequestCreateUpdate) error {
+func (b *BookService) UpdateBook(id int, bookRequestUpdate dtos.BookRequestUpdate) error {
 	book, err := b.getBookRepo(id)
 
 	if err != nil {

@@ -8,7 +8,6 @@ This app contains a CRUD of books and APIs to manager authors of these books.
 - [Golang 1.18+](https://go.dev/)
 - [Postgres](https://www.postgresql.org/)
 - [Docker](https://www.docker.com/)
-- [Swagger](https://github.com/swaggo/echo-swagger);
 - [Makefile](https://makefiletutorial.com/)
 
 ### Environment vars (for local environment):
@@ -18,7 +17,7 @@ This app contains a CRUD of books and APIs to manager authors of these books.
       - AUTHORS_FILE_PATH=./data/authors.csv
 ```
 
-### How to run locally
+### How to use commands of Makefile
 
 You can use Makefile to use commands of the app:
 
@@ -27,16 +26,15 @@ To run all services by docker
 make services-all-up
 ```
 
-To build and run project:
+To build app and run:
 ```
 make run-services-dev
 make build-run
 ```
 
-To run main.go:
+To run for develop locally
 ```
-make run-services-dev
-make run-main
+make run-locally
 ```
 
 To run unit tests:
@@ -55,7 +53,7 @@ make swagger
 ```
 
 ### APIs
-#### List of APIs
+#### List all APIs
 ```
 /swagger/index.html
 ```
@@ -69,15 +67,14 @@ make swagger
 - I used Swagger to generate doccs of APIs;
 - I used Gorm ORM;
 - I used Docker;
-- I used Make;
+- I used Makfile to improves experience on run app;
 
 #### Difficults
 
-- At the begin, I thought use go-routines/workers to import authors from csv file. But It was slowly to import all authors. So, I changed to use unique key name to avoid duplicate authors and I used insert in batch to import authors.
+- At the begin, I thought use go-routines/workers to import authors from csv file. But It was slowly to import all authors one by one. So, I changed to use unique key name to avoid duplicate authors and I used insert in batch to import authors.
+   - Observation: In branch 'turn-func-concurrence' I made some tests using concurrence/insert in batch to improve response time on import a big list of authors from csv file.
 
 - On use docker-compose, the host to connect on database is different, when run only container of database, I need use localhost, but when is communicate between two containers, I need use postgres-go and create new network for this communication called golangtestdriver (You can see it on docker-compose.yml).
 
 - To turn easier for manager relations of book/authors, I decided to use Gorm.
 
-#### Observations
-- In branch 'turn-func-concurrence' I made some tests using concurrence to improve response time on import a big list of authors from csv file

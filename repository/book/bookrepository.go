@@ -20,7 +20,6 @@ func NewBookRepository(db *gorm.DB) *BookRepository {
 	return &BookRepository{db: db}
 }
 
-// Create book
 func (b *BookRepository) CreateBook(book *entities.Book) error {
 
 	if result := b.db.Create(&book); result.Error != nil {
@@ -59,7 +58,6 @@ func (b *BookRepository) GetBook(id int) (*entities.Book, error) {
 	return &book, nil
 }
 
-// Get books
 func (b *BookRepository) GetAllBooks(filter dtos.GetBooksFilter) ([]entities.Book, error) {
 
 	var books []entities.Book

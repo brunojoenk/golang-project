@@ -10,7 +10,14 @@ type AuthorResponse struct {
 	Name string `json:"name"`
 }
 
-type BookRequestCreateUpdate struct {
+type BookRequestCreate struct {
+	Name            string `json:"name"`
+	Edition         string `json:"edition"`
+	PublicationYear int    `json:"publication_year"`
+	Authors         []int  `json:"authors"`
+}
+
+type BookRequestUpdate struct {
 	Name            string `json:"name"`
 	Edition         string `json:"edition"`
 	PublicationYear int    `json:"publication_year"`
@@ -50,6 +57,7 @@ type GetBooksFilter struct {
 
 type AuthorImportResponse struct {
 	Msg   string   `json:"msg"`
+	Total int      `json:"total"`
 	Names []string `json:"names"`
 }
 

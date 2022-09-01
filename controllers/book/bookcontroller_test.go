@@ -35,7 +35,7 @@ func init() {
 }
 
 func TestCreateBook(t *testing.T) {
-	bookControllerTest.createBookRepo = func(bookRequestCreate dtos.BookRequestCreateUpdate) error {
+	bookControllerTest.createBookRepo = func(bookRequestCreate dtos.BookRequestCreate) error {
 		return nil
 	}
 
@@ -72,7 +72,7 @@ func TestCreateBookErrorOnBody(t *testing.T) {
 
 func TestCreateBookErrorOnService(t *testing.T) {
 	errExpected := errors.New("error occurred")
-	bookControllerTest.createBookRepo = func(bookRequestCreate dtos.BookRequestCreateUpdate) error {
+	bookControllerTest.createBookRepo = func(bookRequestCreate dtos.BookRequestCreate) error {
 		return errExpected
 	}
 
@@ -89,7 +89,7 @@ func TestCreateBookErrorOnService(t *testing.T) {
 
 func TestCreateBookWhenAuthorIdIsNotFound(t *testing.T) {
 
-	bookControllerTest.createBookRepo = func(bookRequestCreate dtos.BookRequestCreateUpdate) error {
+	bookControllerTest.createBookRepo = func(bookRequestCreate dtos.BookRequestCreate) error {
 		return utils.ErrAuthorIdNotFound
 	}
 
@@ -348,7 +348,7 @@ func TestUpdateBook(t *testing.T) {
 
 	var bookIdCalled int
 
-	bookControllerTest.updateBookRepo = func(id int, bookRequestUpdate dtos.BookRequestCreateUpdate) error {
+	bookControllerTest.updateBookRepo = func(id int, bookRequestUpdate dtos.BookRequestUpdate) error {
 		bookIdCalled = id
 		return nil
 	}
@@ -367,7 +367,7 @@ func TestUpdateBook(t *testing.T) {
 
 func TestUpdateBookErrorOnParametersIdNotFound(t *testing.T) {
 
-	bookControllerTest.updateBookRepo = func(id int, bookRequestUpdate dtos.BookRequestCreateUpdate) error {
+	bookControllerTest.updateBookRepo = func(id int, bookRequestUpdate dtos.BookRequestUpdate) error {
 		return nil
 	}
 
@@ -400,7 +400,7 @@ func TestUpdateBookErrorOnBody(t *testing.T) {
 
 func TestUpdateBookErrorOnService(t *testing.T) {
 
-	bookControllerTest.updateBookRepo = func(id int, bookRequestUpdate dtos.BookRequestCreateUpdate) error {
+	bookControllerTest.updateBookRepo = func(id int, bookRequestUpdate dtos.BookRequestUpdate) error {
 		return errors.New("error occurred")
 	}
 
@@ -417,7 +417,7 @@ func TestUpdateBookErrorOnService(t *testing.T) {
 
 func TestUpdateBookErrorWhenAuthorIdNotFound(t *testing.T) {
 
-	bookControllerTest.updateBookRepo = func(id int, bookRequestUpdate dtos.BookRequestCreateUpdate) error {
+	bookControllerTest.updateBookRepo = func(id int, bookRequestUpdate dtos.BookRequestUpdate) error {
 		return utils.ErrAuthorIdNotFound
 	}
 

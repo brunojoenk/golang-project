@@ -3,7 +3,7 @@ package controllers
 import (
 	"fmt"
 	"github/brunojoenk/golang-test/models/dtos"
-	services "github/brunojoenk/golang-test/services/author"
+	authorservice "github/brunojoenk/golang-test/services/author"
 	"net/http"
 	"os"
 
@@ -23,7 +23,7 @@ type AuthorController struct {
 
 // NewAuthorController Controller Constructor
 func NewAuthorController(d *gorm.DB) *AuthorController {
-	s := services.NewAuthorService(d)
+	s := authorservice.NewAuthorService(d)
 	return &AuthorController{
 		getAllAuthorsRepo:        s.GetAllAuthors,
 		importAuthorsFromCSVFile: s.ImportAuthorsFromCSVFile}
@@ -51,14 +51,12 @@ func (a *AuthorController) GetAllAuthors(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, "Invalid parameter")
 	}
 
-	// Get all authors.
 	authorsResponse, err := a.getAllAuthorsRepo(filter)
 	if err != nil {
 		c.Logger().Error("Error get all author: %s", err.Error())
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	// Return status 200 OK.
 	return c.JSON(http.StatusOK, authorsResponse)
 }
 
@@ -84,6 +82,7 @@ func (a *AuthorController) ReadCsvHandler(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, dtos.AuthorImportResponse{
 		Msg:   "Authors imported",
+		Total: len(names),
 		Names: names,
 	})
 }
