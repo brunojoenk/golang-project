@@ -131,7 +131,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dtos.BookRequestCreateUpdate"
+                            "$ref": "#/definitions/dtos.BookRequestCreate"
                         }
                     }
                 ],
@@ -226,7 +226,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dtos.BookRequestCreateUpdate"
+                            "$ref": "#/definitions/dtos.BookRequestUpdate"
                         }
                     }
                 ],
@@ -403,7 +403,27 @@ const docTemplate = `{
                 }
             }
         },
-        "dtos.BookRequestCreateUpdate": {
+        "dtos.BookRequestCreate": {
+            "type": "object",
+            "properties": {
+                "authors": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "edition": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "publication_year": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dtos.BookRequestUpdate": {
             "type": "object",
             "properties": {
                 "authors": {
