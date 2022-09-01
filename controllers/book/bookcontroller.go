@@ -14,11 +14,11 @@ import (
 	"gorm.io/gorm"
 )
 
-type CreateBook func(bookRequestCreate dtos.BookRequestCreateUpdate) error
+type CreateBook func(bookRequestCreate dtos.BookRequestCreate) error
 type GetAllBooks func(filter dtos.GetBooksFilter) (*dtos.BookResponseMetadata, error)
 type DeleteBook func(id int) error
 type GetBook func(id int) (*dtos.BookResponse, error)
-type UpdateBook func(id int, bookRequestUpdate dtos.BookRequestCreateUpdate) error
+type UpdateBook func(id int, bookRequestUpdate dtos.BookRequestUpdate) error
 
 type BookController struct {
 	createBookRepo  CreateBook
@@ -44,14 +44,14 @@ func NewBookController(db *gorm.DB) *BookController {
 // @Tags Books
 // @Accept json
 // @Produce json
-// @Param request body dtos.BookRequestCreateUpdate true "query params"
+// @Param request body dtos.BookRequestCreate true "query params"
 // @Success 201 {object} string
 // @Failure 400 {object} string
 // @Failure 500 {object} string
 // @Router /book [post]
 func (b *BookController) CreateBook(c echo.Context) error {
 
-	bookRequestCreate := new(dtos.BookRequestCreateUpdate)
+	bookRequestCreate := new(dtos.BookRequestCreate)
 	if err := c.Bind(bookRequestCreate); err != nil {
 		c.Logger().Warn("Error on bind body to create book: %s", err.Error())
 		return c.JSON(http.StatusBadRequest, fmt.Sprintf("Request body to crate a book is invalid: %s", err.Error()))
@@ -174,7 +174,7 @@ func (b *BookController) GetBook(c echo.Context) error {
 // @Accept */*
 // @Produce json
 // @Param id   path int true "Book ID"
-// @Param request body dtos.BookRequestCreateUpdate true "query params"
+// @Param request body dtos.BookRequestUpdate true "query params"
 // @Success 200 {object} string
 // @Failure 400 {object} string
 // @Failure 500 {object} string
@@ -188,7 +188,7 @@ func (b *BookController) UpdateBook(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, "Invalid query parameter id")
 	}
 
-	bookRequestUpdate := new(dtos.BookRequestCreateUpdate)
+	bookRequestUpdate := new(dtos.BookRequestUpdate)
 	if err := c.Bind(bookRequestUpdate); err != nil {
 		c.Logger().Warn("Error on parse body on update book %s", err.Error())
 		return c.JSON(http.StatusBadRequest, fmt.Sprintf("Error on parse body to update book: %s", err.Error()))
