@@ -16,7 +16,20 @@ definitions:
       pagination:
         $ref: '#/definitions/dtos.Pagination'
     type: object
-  dtos.BookRequestCreateUpdate:
+  dtos.BookRequestCreate:
+    properties:
+      authors:
+        items:
+          type: integer
+        type: array
+      edition:
+        type: string
+      name:
+        type: string
+      publication_year:
+        type: integer
+    type: object
+  dtos.BookRequestUpdate:
     properties:
       authors:
         items:
@@ -141,7 +154,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/dtos.BookRequestCreateUpdate'
+          $ref: '#/definitions/dtos.BookRequestCreate'
       produces:
       - application/json
       responses:
@@ -232,7 +245,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/dtos.BookRequestCreateUpdate'
+          $ref: '#/definitions/dtos.BookRequestUpdate'
       produces:
       - application/json
       responses:

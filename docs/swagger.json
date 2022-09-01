@@ -124,7 +124,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dtos.BookRequestCreateUpdate"
+                            "$ref": "#/definitions/dtos.BookRequestCreate"
                         }
                     }
                 ],
@@ -219,7 +219,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dtos.BookRequestCreateUpdate"
+                            "$ref": "#/definitions/dtos.BookRequestUpdate"
                         }
                     }
                 ],
@@ -396,7 +396,27 @@
                 }
             }
         },
-        "dtos.BookRequestCreateUpdate": {
+        "dtos.BookRequestCreate": {
+            "type": "object",
+            "properties": {
+                "authors": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "edition": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "publication_year": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dtos.BookRequestUpdate": {
             "type": "object",
             "properties": {
                 "authors": {
