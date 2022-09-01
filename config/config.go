@@ -7,16 +7,6 @@ import (
 type Config struct {
 	ServerPort  string
 	DatabaseURL string
-	Postgres    PostgresConfig
-}
-
-// Postgresql config
-type PostgresConfig struct {
-	PostgresqlHost     string
-	PostgresqlPort     string
-	PostgresqlUser     string
-	PostgresqlPassword string
-	PostgresqlDbname   string
 }
 
 func New() *Config {
