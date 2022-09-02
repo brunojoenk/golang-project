@@ -11,6 +11,8 @@ import (
 	"gorm.io/gorm"
 )
 
+var BATCH_SIZE = 2000
+
 type GetAllAuthors func(filter dtos.GetAuthorsFilter) ([]entities.Author, error)
 type CreateAuthorInBatch func(author []*entities.Author, batchSize int) error
 
@@ -72,33 +74,56 @@ func (a *AuthorService) ImportAuthorsFromCSVFile(file string) ([]string, error) 
 		return nil, err
 	}
 
-	names := make([]string, 0)
-	mapper := make(map[string]bool, 0)
-	batchSize := 2000
+	var names []string
 
 	for _, record := range records {
-		count := 0
-		var batch []*entities.Author
-		for i, name := range record {
-			if !mapper[name] {
-				mapper[name] = true
-				count++
-				batch = append(batch, &entities.Author{Name: name})
-				names = append(names, name)
-			}
-			if count == batchSize || i == (len(record)-1) {
-				err := a.createAuthorInBatchRepo(batch, count)
-				if err != nil {
-					log.Error("Error on create author in batch repository: ", err.Error())
-					return nil, err
-				}
-				batch = make([]*entities.Author, 0)
-				count = 0
-			}
-
+		names, err = a.processRecord(record)
+		if err != nil {
+			return nil, err
 		}
-
 	}
 
 	return names, err
+}
+
+func (a *AuthorService) processRecord(record []string) ([]string, error) {
+	authorsAddedMap := make(map[string]bool, 0)
+	batchToCreate := make([]*entities.Author, 0)
+	for index, name := range record {
+		if a.authorNotAdded(authorsAddedMap, name) {
+			authorsAddedMap[name] = true
+			batchToCreate = append(batchToCreate, &entities.Author{Name: name})
+		}
+		if a.canCreateInBatch(index, len(record)) {
+			err := a.createAuthorInBatchRepo(batchToCreate, index)
+			if err != nil {
+				log.Error("Error on create author in batch repository: ", err.Error())
+				return nil, err
+			}
+			batchToCreate = make([]*entities.Author, 0)
+		}
+	}
+
+	namesAdded := make([]string, 0)
+	for name := range authorsAddedMap {
+		namesAdded = append(namesAdded, name)
+	}
+
+	return namesAdded, nil
+}
+
+func (a *AuthorService) canCreateInBatch(index, recordSize int) bool {
+	return (index > 0 && a.isCounterEqualBatchSize(index)) || a.isLastItemToIterate(index, recordSize)
+}
+
+func (a *AuthorService) isCounterEqualBatchSize(index int) bool {
+	return index%BATCH_SIZE == 0
+}
+
+func (a *AuthorService) isLastItemToIterate(index, recordSize int) bool {
+	return index == (recordSize - 1)
+}
+
+func (a *AuthorService) authorNotAdded(authorsAddedMap map[string]bool, name string) bool {
+	return !authorsAddedMap[name]
 }

@@ -10,10 +10,7 @@ run-main:
 	go run main.go
 
 run-services-dev:
-	docker-compose -f docker-compose-dev.yml up 
-
-run-locally:
-	make run-services-dev && run-main
+	docker-compose -f docker-compose-dev.yml up
 
 tests:
 	go test  ./...
