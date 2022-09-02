@@ -90,7 +90,7 @@ func (a *AuthorService) processRecord(record []string) ([]string, error) {
 	authorsAddedMap := make(map[string]bool, 0)
 	batchToCreate := make([]*entities.Author, 0)
 	for index, name := range record {
-		if a.authorNotAdded(authorsAddedMap, name) {
+		if a.isAuthorNotAdded(authorsAddedMap, name) {
 			authorsAddedMap[name] = true
 			batchToCreate = append(batchToCreate, &entities.Author{Name: name})
 		}
@@ -124,6 +124,6 @@ func (a *AuthorService) isLastItemToIterate(index, recordSize int) bool {
 	return index == (recordSize - 1)
 }
 
-func (a *AuthorService) authorNotAdded(authorsAddedMap map[string]bool, name string) bool {
+func (a *AuthorService) isAuthorNotAdded(authorsAddedMap map[string]bool, name string) bool {
 	return !authorsAddedMap[name]
 }
