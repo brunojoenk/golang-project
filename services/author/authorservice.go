@@ -12,8 +12,10 @@ import (
 	"gorm.io/gorm"
 )
 
+var BATCH_SIZE = 2000
+
 type GetAllAuthors func(filter dtos.GetAuthorsFilter) ([]entities.Author, error)
-type CreateAuthorInBatch func(author []*entities.Author, batchSize int) error
+type CreateAuthorInBatch func(author []entities.Author, batchSize int) error
 
 type AuthorService struct {
 	getAllAuthorsRepository GetAllAuthors
@@ -53,27 +55,25 @@ func (a *AuthorService) GetAllAuthors(filter dtos.GetAuthorsFilter) (*dtos.Autho
 }
 
 // Import all author using concurrence
-func (a *AuthorService) ImportAuthorsFromCSVFile(file string) ([]string, error) {
+func (a *AuthorService) ImportAuthorsFromCSVFile(file string) (int, error) {
 	f, err := os.Open(file)
 
 	if err != nil {
 		log.Error("Error on open file: ", err.Error())
-		return nil, err
+		return 0, err
 	}
 
 	defer f.Close()
 
 	fcsv := csv.NewReader(f)
 	fcsv.Comma = ';'
-	authors := make([]*entities.Author, 0)
-	numWorkers := 20
-	jobs := make(chan []*entities.Author, numWorkers)
-	res := make(chan []*entities.Author)
 
-	batchSize := 1000
+	numWorkers := 20
+	jobs := make(chan []entities.Author, numWorkers)
+	res := make(chan []entities.Author)
 
 	var wg sync.WaitGroup
-	worker := func(jobs <-chan []*entities.Author, results chan<- []*entities.Author) error {
+	worker := func(jobs <-chan []entities.Author, results chan<- []entities.Author) error {
 		for {
 			select {
 			case job, ok := <-jobs: // you must check for readable state of the channel.
@@ -109,22 +109,18 @@ func (a *AuthorService) ImportAuthorsFromCSVFile(file string) ([]string, error) 
 			return
 		}
 		for _, record := range rStr {
-			count := 0
-			batch := make([]*entities.Author, 0)
+			batch := make([]entities.Author, 0)
 			for i, name := range record {
 				if !mapper[name] {
 					mapper[name] = true
-					count++
-					batch = append(batch, &entities.Author{Name: name})
+					batch = append(batch, entities.Author{Name: name})
 				}
-				if count == batchSize || i == (len(record)-1) {
+				if (i > 0 && i%BATCH_SIZE == 0) || i == (len(record)-1) {
 					jobs <- batch
-					batch = make([]*entities.Author, 0)
-					count = 0
+					batch = make([]entities.Author, 0)
 				}
 			}
 		}
-
 		close(jobs) // close jobs to signal workers that no more job are incoming.
 	}()
 
@@ -133,14 +129,10 @@ func (a *AuthorService) ImportAuthorsFromCSVFile(file string) ([]string, error) 
 		close(res) // when you close(res) it breaks the below loop.
 	}()
 
+	authors := make([]entities.Author, 0)
 	for r := range res {
 		authors = append(authors, r...)
 	}
 
-	names := make([]string, 0)
-	for _, a := range authors {
-		names = append(names, a.Name)
-	}
-
-	return names, errOnBatch
+	return len(authors), errOnBatch
 }

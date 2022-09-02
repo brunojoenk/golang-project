@@ -19,7 +19,7 @@ func NewAuthorRepository(d *gorm.DB) *AuthorRepository {
 	return &AuthorRepository{db: d}
 }
 
-func (a *AuthorRepository) CreateAuthorInBatch(author []*entities.Author, batchSize int) error {
+func (a *AuthorRepository) CreateAuthorInBatch(author []entities.Author, batchSize int) error {
 
 	if result := a.db.CreateInBatches(author, batchSize); result.Error != nil {
 		log.Error("Error on create authors in batch: ", result.Error.Error())

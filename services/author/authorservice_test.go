@@ -53,21 +53,21 @@ func TestGetAllAuthorsError(t *testing.T) {
 }
 
 func TestImportAuthorsFromCSVFile(t *testing.T) {
-	authorServiceTest.createAuthorInBatchRepo = func(author []*entities.Author, batchSize int) error {
+	authorServiceTest.createAuthorInBatchRepo = func(author []entities.Author, batchSize int) error {
 		return nil
 	}
 	resp, err := authorServiceTest.ImportAuthorsFromCSVFile("../../data/authorsreduced.csv")
 	require.NoError(t, err)
-	require.Equal(t, len(resp), 6)
+	require.Equal(t, resp, 6)
 }
 
 func TestImportAuthorsFromCSVFileErronOnCreateAuthorInBatch(t *testing.T) {
-	authorServiceTest.createAuthorInBatchRepo = func(author []*entities.Author, batchSize int) error {
+	authorServiceTest.createAuthorInBatchRepo = func(author []entities.Author, batchSize int) error {
 		return errors.New("error occurred")
 	}
 	resp, err := authorServiceTest.ImportAuthorsFromCSVFile("../../data/authorsreduced.csv")
 	require.Error(t, err)
-	require.Equal(t, len(resp), 0)
+	require.Equal(t, resp, 0)
 }
 
 func TestImportAuthorsFromCSVFileError(t *testing.T) {
