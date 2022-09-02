@@ -109,17 +109,7 @@ func (a *AuthorService) ImportAuthorsFromCSVFile(file string) (int, error) {
 			return
 		}
 		for _, record := range rStr {
-			batch := make([]entities.Author, 0)
-			for i, name := range record {
-				if !mapper[name] {
-					mapper[name] = true
-					batch = append(batch, entities.Author{Name: name})
-				}
-				if (i > 0 && i%BATCH_SIZE == 0) || i == (len(record)-1) {
-					jobs <- batch
-					batch = make([]entities.Author, 0)
-				}
-			}
+			a.processRecord(record, mapper, jobs)
 		}
 		close(jobs) // close jobs to signal workers that no more job are incoming.
 	}()
@@ -135,4 +125,34 @@ func (a *AuthorService) ImportAuthorsFromCSVFile(file string) (int, error) {
 	}
 
 	return len(authors), errOnBatch
+}
+
+func (a *AuthorService) processRecord(record []string, mapper map[string]bool, jobs chan []entities.Author) {
+	batch := make([]entities.Author, 0)
+	for i, name := range record {
+		if a.authorNotAdded(mapper, name) {
+			mapper[name] = true
+			batch = append(batch, entities.Author{Name: name})
+		}
+		if a.canCreateInBatch(i, len(record)) {
+			jobs <- batch
+			batch = make([]entities.Author, 0)
+		}
+	}
+}
+
+func (a *AuthorService) canCreateInBatch(index, recordSize int) bool {
+	return (index > 0 && a.isCounterEqualBatchSize(index)) || a.isLastItemToIterate(index, recordSize)
+}
+
+func (a *AuthorService) isCounterEqualBatchSize(index int) bool {
+	return index%BATCH_SIZE == 0
+}
+
+func (a *AuthorService) isLastItemToIterate(index, recordSize int) bool {
+	return index == (recordSize - 1)
+}
+
+func (a *AuthorService) authorNotAdded(authorsAddedMap map[string]bool, name string) bool {
+	return !authorsAddedMap[name]
 }
