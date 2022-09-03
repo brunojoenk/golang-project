@@ -103,12 +103,12 @@ func (a *AuthorService) ImportAuthorsFromCSVFile(file string) (int, error) {
 
 	go func() {
 		authorsAddedMap := make(map[string]bool, 0)
-		rStr, err := fcsv.ReadAll()
+		records, err := fcsv.ReadAll()
 		if err != nil {
 			log.Error("Error on read all csv: ", err.Error())
 			return
 		}
-		for _, record := range rStr {
+		for _, record := range records {
 			a.processRecord(record, authorsAddedMap, jobs)
 		}
 		close(jobs) // close jobs to signal workers that no more job are incoming.
