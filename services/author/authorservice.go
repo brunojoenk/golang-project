@@ -72,7 +72,6 @@ func (a *AuthorService) ImportAuthorsFromCSVFile(file string) (int, error) {
 	jobs := make(chan []entities.Author, numWorkers)
 	res := make(chan []entities.Author)
 
-	var wg sync.WaitGroup
 	worker := func(jobs <-chan []entities.Author, results chan<- []entities.Author) error {
 		for {
 			select {
@@ -91,6 +90,7 @@ func (a *AuthorService) ImportAuthorsFromCSVFile(file string) (int, error) {
 	}
 
 	var errOnBatch error
+	var wg sync.WaitGroup
 	// init workers
 	for w := 0; w < numWorkers; w++ {
 		wg.Add(1)
@@ -102,14 +102,14 @@ func (a *AuthorService) ImportAuthorsFromCSVFile(file string) (int, error) {
 	}
 
 	go func() {
-		mapper := make(map[string]bool, 0)
+		authorsAddedMap := make(map[string]bool, 0)
 		rStr, err := fcsv.ReadAll()
 		if err != nil {
 			log.Error("Error on read all csv: ", err.Error())
 			return
 		}
 		for _, record := range rStr {
-			a.processRecord(record, mapper, jobs)
+			a.processRecord(record, authorsAddedMap, jobs)
 		}
 		close(jobs) // close jobs to signal workers that no more job are incoming.
 	}()
@@ -127,16 +127,16 @@ func (a *AuthorService) ImportAuthorsFromCSVFile(file string) (int, error) {
 	return len(authors), errOnBatch
 }
 
-func (a *AuthorService) processRecord(record []string, mapper map[string]bool, jobs chan []entities.Author) {
-	batch := make([]entities.Author, 0)
+func (a *AuthorService) processRecord(record []string, authorsAddedMap map[string]bool, jobs chan []entities.Author) {
+	batchToCreate := make([]entities.Author, 0)
 	for i, name := range record {
-		if a.authorNotAdded(mapper, name) {
-			mapper[name] = true
-			batch = append(batch, entities.Author{Name: name})
+		if a.isAuthorNotAdded(authorsAddedMap, name) {
+			authorsAddedMap[name] = true
+			batchToCreate = append(batchToCreate, entities.Author{Name: name})
 		}
 		if a.canCreateInBatch(i, len(record)) {
-			jobs <- batch
-			batch = make([]entities.Author, 0)
+			jobs <- batchToCreate
+			batchToCreate = make([]entities.Author, 0)
 		}
 	}
 }
@@ -153,6 +153,6 @@ func (a *AuthorService) isLastItemToIterate(index, recordSize int) bool {
 	return index == (recordSize - 1)
 }
 
-func (a *AuthorService) authorNotAdded(authorsAddedMap map[string]bool, name string) bool {
+func (a *AuthorService) isAuthorNotAdded(authorsAddedMap map[string]bool, name string) bool {
 	return !authorsAddedMap[name]
 }
