@@ -93,8 +93,8 @@ func (a *AuthorService) processRecord(record []string, authorsAddedMap map[strin
 			authorsAddedMap[name] = true
 			batchToCreate = append(batchToCreate, entities.Author{Name: name})
 		}
-		if a.canCreateInBatch(index, len(record)) {
-			err := a.createAuthorInBatchRepo(batchToCreate, index)
+		if a.canCreateInBatch(index, len(record), len(batchToCreate)) {
+			err := a.createAuthorInBatchRepo(batchToCreate, len(batchToCreate))
 			if err != nil {
 				log.Error("Error on create author in batch repository: ", err.Error())
 				return err
@@ -106,12 +106,12 @@ func (a *AuthorService) processRecord(record []string, authorsAddedMap map[strin
 	return nil
 }
 
-func (a *AuthorService) canCreateInBatch(index, recordSize int) bool {
-	return a.isCounterEqualBatchSize(index) || a.isLastItemToProcess(index, recordSize)
+func (a *AuthorService) canCreateInBatch(index, recordSize, batchSize int) bool {
+	return a.isCounterEqualBatchSize(batchSize) || a.isLastItemToProcess(index, recordSize)
 }
 
-func (a *AuthorService) isCounterEqualBatchSize(index int) bool {
-	return index > 0 && index%BATCH_SIZE == 0
+func (a *AuthorService) isCounterEqualBatchSize(batchSize int) bool {
+	return batchSize > 0 && batchSize%BATCH_SIZE == 0
 }
 
 func (a *AuthorService) isLastItemToProcess(index, recordSize int) bool {
