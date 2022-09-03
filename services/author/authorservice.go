@@ -142,14 +142,14 @@ func (a *AuthorService) processRecord(record []string, authorsAddedMap map[strin
 }
 
 func (a *AuthorService) canCreateInBatch(index, recordSize int) bool {
-	return (index > 0 && a.isCounterEqualBatchSize(index)) || a.isLastItemToIterate(index, recordSize)
+	return a.isCounterEqualBatchSize(index) || a.isLastItemToProcess(index, recordSize)
 }
 
 func (a *AuthorService) isCounterEqualBatchSize(index int) bool {
-	return index%BATCH_SIZE == 0
+	return index > 0 && index%BATCH_SIZE == 0
 }
 
-func (a *AuthorService) isLastItemToIterate(index, recordSize int) bool {
+func (a *AuthorService) isLastItemToProcess(index, recordSize int) bool {
 	return index == (recordSize - 1)
 }
 
