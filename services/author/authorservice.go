@@ -53,13 +53,13 @@ func (a *AuthorService) GetAllAuthors(filter dtos.GetAuthorsFilter) (*dtos.Autho
 	return authorResponseMetada, nil
 }
 
-func (a *AuthorService) ImportAuthorsFromCSVFile(file string) ([]string, error) {
+func (a *AuthorService) ImportAuthorsFromCSVFile(file string) (int, error) {
 
 	f, err := os.Open(file)
 
 	if err != nil {
 		log.Error("Error on open file: ", err.Error())
-		return nil, err
+		return 0, err
 	}
 
 	defer f.Close()
@@ -71,23 +71,22 @@ func (a *AuthorService) ImportAuthorsFromCSVFile(file string) ([]string, error) 
 
 	if err != nil {
 		log.Error("Error on readall from file: ", err.Error())
-		return nil, err
+		return 0, err
 	}
 
-	var names []string
-
+	authorsAddedMap := make(map[string]bool, 0)
 	for _, record := range records {
-		names, err = a.processRecord(record)
+		err = a.processRecord(record, authorsAddedMap)
 		if err != nil {
-			return nil, err
+			return 0, err
 		}
 	}
 
-	return names, err
+	return len(authorsAddedMap), err
 }
 
-func (a *AuthorService) processRecord(record []string) ([]string, error) {
-	authorsAddedMap := make(map[string]bool, 0)
+func (a *AuthorService) processRecord(record []string, authorsAddedMap map[string]bool) error {
+
 	batchToCreate := make([]*entities.Author, 0)
 	for index, name := range record {
 		if a.isAuthorNotAdded(authorsAddedMap, name) {
@@ -98,18 +97,13 @@ func (a *AuthorService) processRecord(record []string) ([]string, error) {
 			err := a.createAuthorInBatchRepo(batchToCreate, index)
 			if err != nil {
 				log.Error("Error on create author in batch repository: ", err.Error())
-				return nil, err
+				return err
 			}
 			batchToCreate = make([]*entities.Author, 0)
 		}
 	}
 
-	namesAdded := make([]string, 0)
-	for name := range authorsAddedMap {
-		namesAdded = append(namesAdded, name)
-	}
-
-	return namesAdded, nil
+	return nil
 }
 
 func (a *AuthorService) canCreateInBatch(index, recordSize int) bool {

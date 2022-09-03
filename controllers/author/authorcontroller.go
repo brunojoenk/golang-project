@@ -14,7 +14,7 @@ import (
 )
 
 type GetAllAuthors func(filter dtos.GetAuthorsFilter) (*dtos.AuthorResponseMetadata, error)
-type ImportAuthorsFromCSVFile func(file string) ([]string, error)
+type ImportAuthorsFromCSVFile func(file string) (int, error)
 
 type AuthorController struct {
 	getAllAuthorsRepo        GetAllAuthors
@@ -76,13 +76,12 @@ func (a *AuthorController) ReadCsvHandler(c echo.Context) error {
 		//Set default, safe mode. When run locally, this env is exported on makefile
 		authorsFilePath = "./data/authorsreduced.csv"
 	}
-	names, err := a.importAuthorsFromCSVFile(authorsFilePath)
+	totalAuthorsAdded, err := a.importAuthorsFromCSVFile(authorsFilePath)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, fmt.Sprintf("Error on import authors: %s", err.Error()))
 	}
 	return c.JSON(http.StatusOK, dtos.AuthorImportResponse{
 		Msg:   "Authors imported",
-		Total: len(names),
-		Names: names,
+		Total: totalAuthorsAdded,
 	})
 }

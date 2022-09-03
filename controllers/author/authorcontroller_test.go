@@ -94,9 +94,9 @@ func TestGetAllAuthorsErrorOnService(t *testing.T) {
 
 func TestImportReadCsvHandler(t *testing.T) {
 	expectedFuncCalled := 0
-	authorControllerTest.importAuthorsFromCSVFile = func(file string) ([]string, error) {
+	authorControllerTest.importAuthorsFromCSVFile = func(file string) (int, error) {
 		expectedFuncCalled = expectedFuncCalled + 1
-		return nil, nil
+		return 0, nil
 	}
 
 	e := echo.New()
@@ -117,10 +117,10 @@ func TestImportReadCsvHandlerError(t *testing.T) {
 	os.Setenv("AUTHORS_FILE_PATH", "")
 	expectedFuncCalled := 0
 	fileCalled := ""
-	authorControllerTest.importAuthorsFromCSVFile = func(file string) ([]string, error) {
+	authorControllerTest.importAuthorsFromCSVFile = func(file string) (int, error) {
 		expectedFuncCalled = expectedFuncCalled + 1
 		fileCalled = file
-		return nil, errors.New("Error occurred")
+		return 0, errors.New("Error occurred")
 	}
 
 	e := echo.New()

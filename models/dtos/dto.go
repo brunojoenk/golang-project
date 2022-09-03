@@ -56,9 +56,8 @@ type GetBooksFilter struct {
 }
 
 type AuthorImportResponse struct {
-	Msg   string   `json:"msg"`
-	Total int      `json:"total"`
-	Names []string `json:"names"`
+	Msg   string `json:"msg"`
+	Total int    `json:"total"`
 }
 
 func (p *Pagination) ValidValuesAndSetDefault() {
