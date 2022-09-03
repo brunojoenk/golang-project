@@ -54,8 +54,8 @@ func (a *AuthorService) GetAllAuthors(filter dtos.GetAuthorsFilter) (*dtos.Autho
 	return authorResponseMetada, nil
 }
 
-// Import all author using concurrence
 func (a *AuthorService) ImportAuthorsFromCSVFile(file string) (int, error) {
+
 	f, err := os.Open(file)
 
 	if err != nil {

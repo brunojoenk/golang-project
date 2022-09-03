@@ -34,7 +34,8 @@ make build-run
 
 To run for develop locally
 ```
-make run-locally
+make run-services-dev 
+make run-main
 ```
 
 To run unit tests:

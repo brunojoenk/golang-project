@@ -58,7 +58,7 @@ func TestImportAuthorsFromCSVFile(t *testing.T) {
 	}
 	resp, err := authorServiceTest.ImportAuthorsFromCSVFile("../../data/authorsreduced.csv")
 	require.NoError(t, err)
-	require.Equal(t, resp, 6)
+	require.Equal(t, 6, resp)
 }
 
 func TestImportAuthorsFromCSVFileErronOnCreateAuthorInBatch(t *testing.T) {
@@ -67,7 +67,7 @@ func TestImportAuthorsFromCSVFileErronOnCreateAuthorInBatch(t *testing.T) {
 	}
 	resp, err := authorServiceTest.ImportAuthorsFromCSVFile("../../data/authorsreduced.csv")
 	require.Error(t, err)
-	require.Equal(t, resp, 0)
+	require.Equal(t, 0, resp)
 }
 
 func TestImportAuthorsFromCSVFileError(t *testing.T) {

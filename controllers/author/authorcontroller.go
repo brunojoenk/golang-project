@@ -76,12 +76,20 @@ func (a *AuthorController) ReadCsvHandler(c echo.Context) error {
 		//Set default, safe mode. When run locally, this env is exported on makefile
 		authorsFilePath = "./data/authorsreduced.csv"
 	}
+<<<<<<< HEAD
 	totalNames, err := a.importAuthorsFromCSVFile(authorsFilePath)
+=======
+	totalAuthorsAdded, err := a.importAuthorsFromCSVFile(authorsFilePath)
+>>>>>>> main
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, fmt.Sprintf("Error on import authors: %s", err.Error()))
 	}
 	return c.JSON(http.StatusOK, dtos.AuthorImportResponse{
 		Msg:   "Authors imported",
+<<<<<<< HEAD
 		Total: totalNames,
+=======
+		Total: totalAuthorsAdded,
+>>>>>>> main
 	})
 }
