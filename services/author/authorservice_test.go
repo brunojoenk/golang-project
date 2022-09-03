@@ -53,7 +53,7 @@ func TestGetAllAuthorsError(t *testing.T) {
 }
 
 func TestImportAuthorsFromCSVFile(t *testing.T) {
-	authorServiceTest.createAuthorInBatchRepo = func(author []*entities.Author, batchSize int) error {
+	authorServiceTest.createAuthorInBatchRepo = func(author []entities.Author, batchSize int) error {
 		return nil
 	}
 	resp, err := authorServiceTest.ImportAuthorsFromCSVFile("../../data/authorsreduced.csv")
@@ -62,7 +62,7 @@ func TestImportAuthorsFromCSVFile(t *testing.T) {
 }
 
 func TestImportAuthorsFromCSVFileErronOnCreateAuthorInBatch(t *testing.T) {
-	authorServiceTest.createAuthorInBatchRepo = func(author []*entities.Author, batchSize int) error {
+	authorServiceTest.createAuthorInBatchRepo = func(author []entities.Author, batchSize int) error {
 		return errors.New("error occurred")
 	}
 	resp, err := authorServiceTest.ImportAuthorsFromCSVFile("../../data/authorsreduced.csv")

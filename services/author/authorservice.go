@@ -14,7 +14,7 @@ import (
 var BATCH_SIZE = 2000
 
 type GetAllAuthors func(filter dtos.GetAuthorsFilter) ([]entities.Author, error)
-type CreateAuthorInBatch func(author []*entities.Author, batchSize int) error
+type CreateAuthorInBatch func(author []entities.Author, batchSize int) error
 
 type AuthorService struct {
 	getAllAuthorsRepository GetAllAuthors
@@ -87,11 +87,11 @@ func (a *AuthorService) ImportAuthorsFromCSVFile(file string) (int, error) {
 
 func (a *AuthorService) processRecord(record []string, authorsAddedMap map[string]bool) error {
 
-	batchToCreate := make([]*entities.Author, 0)
+	batchToCreate := make([]entities.Author, 0)
 	for index, name := range record {
 		if a.isAuthorNotAdded(authorsAddedMap, name) {
 			authorsAddedMap[name] = true
-			batchToCreate = append(batchToCreate, &entities.Author{Name: name})
+			batchToCreate = append(batchToCreate, entities.Author{Name: name})
 		}
 		if a.canCreateInBatch(index, len(record)) {
 			err := a.createAuthorInBatchRepo(batchToCreate, index)
@@ -99,7 +99,7 @@ func (a *AuthorService) processRecord(record []string, authorsAddedMap map[strin
 				log.Error("Error on create author in batch repository: ", err.Error())
 				return err
 			}
-			batchToCreate = make([]*entities.Author, 0)
+			batchToCreate = make([]entities.Author, 0)
 		}
 	}
 

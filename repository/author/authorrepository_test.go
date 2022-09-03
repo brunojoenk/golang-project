@@ -143,7 +143,7 @@ func (s *Suite) Test_repository_Create_Author() {
 			AddRow(id))
 	s.mock.ExpectCommit()
 
-	err := s.repository.CreateAuthorInBatch([]*entities.Author{{Name: name}}, 1)
+	err := s.repository.CreateAuthorInBatch([]entities.Author{{Name: name}}, 1)
 
 	require.NoError(s.T(), err)
 }
@@ -162,7 +162,7 @@ func (s *Suite) Test_repository_Create_Author_Error() {
 
 	s.mock.ExpectRollback()
 
-	err := s.repository.CreateAuthorInBatch([]*entities.Author{{Name: name}}, 1)
+	err := s.repository.CreateAuthorInBatch([]entities.Author{{Name: name}}, 1)
 
 	require.Error(s.T(), err)
 }
