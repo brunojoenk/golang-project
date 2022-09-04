@@ -75,18 +75,20 @@ func (a *AuthorService) ImportAuthorsFromCSVFile(file string) (int, error) {
 	}
 
 	authorsAddedMap := make(map[string]bool, 0)
+	totalAuthors := 0
 	for _, record := range records {
-		err = a.processRecord(record, authorsAddedMap)
+		numAdded, err := a.processRecord(record, authorsAddedMap)
+		totalAuthors = totalAuthors + numAdded
 		if err != nil {
 			return 0, err
 		}
 	}
 
-	return len(authorsAddedMap), err
+	return totalAuthors, err
 }
 
-func (a *AuthorService) processRecord(record []string, authorsAddedMap map[string]bool) error {
-
+func (a *AuthorService) processRecord(record []string, authorsAddedMap map[string]bool) (int, error) {
+	totalAuthors := 0
 	batchToCreate := make([]entities.Author, 0)
 	for index, name := range record {
 		if a.isAuthorNotAdded(authorsAddedMap, name) {
@@ -97,13 +99,14 @@ func (a *AuthorService) processRecord(record []string, authorsAddedMap map[strin
 			err := a.createAuthorInBatchRepo(batchToCreate, len(batchToCreate))
 			if err != nil {
 				log.Error("Error on create author in batch repository: ", err.Error())
-				return err
+				return totalAuthors, err
 			}
+			totalAuthors = totalAuthors + (len(batchToCreate))
 			batchToCreate = make([]entities.Author, 0)
 		}
 	}
 
-	return nil
+	return totalAuthors, nil
 }
 
 func (a *AuthorService) canCreateInBatch(index, recordSize, batchSize int) bool {
