@@ -73,20 +73,15 @@ func (a *AuthorService) ImportAuthorsFromCSVFile(file string) (int, error) {
 	res := make(chan []entities.Author)
 
 	worker := func(jobs <-chan []entities.Author, results chan<- []entities.Author) error {
-		for {
-			select {
-			case job, ok := <-jobs: // you must check for readable state of the channel.
-				if !ok {
-					return nil
-				}
-				err := a.createAuthorInBatchRepo(job, len(job))
-				if err != nil {
-					log.Error("Error on create author in batch repository: ", err.Error())
-					return err
-				}
-				results <- job
+		for job := range jobs {
+			err := a.createAuthorInBatchRepo(job, len(job))
+			if err != nil {
+				log.Error("Error on create author in batch repository: ", err.Error())
+				return err
 			}
+			results <- job
 		}
+		return nil
 	}
 
 	var errOnBatch error
