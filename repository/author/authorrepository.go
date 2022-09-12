@@ -9,13 +9,19 @@ import (
 	"gorm.io/gorm"
 )
 
+type IAuthorRepository interface {
+	CreateAuthorInBatch(author []entities.Author, batchSize int) error
+	GetAuthor(id int) (*entities.Author, error)
+	GetAllAuthors(filter dtos.GetAuthorsFilter) ([]entities.Author, error)
+}
+
 // AuthorsRepository Author Repository
 type AuthorRepository struct {
 	db *gorm.DB
 }
 
 // NewAuthorsRepository Repository Constructor
-func NewAuthorRepository(d *gorm.DB) *AuthorRepository {
+func NewAuthorRepository(d *gorm.DB) IAuthorRepository {
 	return &AuthorRepository{db: d}
 }
 

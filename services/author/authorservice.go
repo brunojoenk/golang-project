@@ -13,24 +13,20 @@ import (
 
 var BATCH_SIZE = 2000
 
-type GetAllAuthors func(filter dtos.GetAuthorsFilter) ([]entities.Author, error)
-type CreateAuthorInBatch func(author []entities.Author, batchSize int) error
-
 type AuthorService struct {
-	getAllAuthorsRepository GetAllAuthors
-	createAuthorInBatchRepo CreateAuthorInBatch
+	authorDb authorrepo.IAuthorRepository
 }
 
 // NewBookService Service Constructor
 func NewAuthorService(db *gorm.DB) *AuthorService {
 	repo := authorrepo.NewAuthorRepository(db)
-	return &AuthorService{getAllAuthorsRepository: repo.GetAllAuthors, createAuthorInBatchRepo: repo.CreateAuthorInBatch}
+	return &AuthorService{authorDb: repo}
 }
 
 func (a *AuthorService) GetAllAuthors(filter dtos.GetAuthorsFilter) (*dtos.AuthorResponseMetadata, error) {
 
 	filter.Pagination.ValidValuesAndSetDefault()
-	authors, err := a.getAllAuthorsRepository(filter)
+	authors, err := a.authorDb.GetAllAuthors(filter)
 	if err != nil {
 		log.Error("Error on get all authors from repositoriy: ", err.Error())
 		return nil, err
@@ -96,7 +92,7 @@ func (a *AuthorService) processRecord(record []string, authorsAddedMap map[strin
 			batchToCreate = append(batchToCreate, entities.Author{Name: name})
 		}
 		if a.canCreateInBatch(index, len(record), len(batchToCreate)) {
-			err := a.createAuthorInBatchRepo(batchToCreate, len(batchToCreate))
+			err := a.authorDb.CreateAuthorInBatch(batchToCreate, len(batchToCreate))
 			if err != nil {
 				log.Error("Error on create author in batch repository: ", err.Error())
 				return totalAuthors, err

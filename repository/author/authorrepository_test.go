@@ -50,7 +50,7 @@ func (s *Suite) SetupSuite() {
 	s.DB, err = gorm.Open(dialector, &gorm.Config{})
 	require.NoError(s.T(), err)
 
-	s.repository = NewAuthorRepository(s.DB)
+	s.repository = &AuthorRepository{db: s.DB}
 }
 
 func (s *Suite) Test_repository_Get_Author() {
