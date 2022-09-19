@@ -9,30 +9,13 @@ import (
 	"github.com/go-test/deep"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	authorrepo "github/brunojoenk/golang-test/repository/author"
 )
-
-type authorDbMock struct {
-	mock.Mock
-}
-
-func (m *authorDbMock) GetAllAuthors(filter dtos.GetAuthorsFilter) ([]entities.Author, error) {
-	args := m.Called(filter)
-	return args.Get(0).([]entities.Author), args.Error(1)
-}
-
-func (m *authorDbMock) CreateAuthorInBatch(author []entities.Author, batchSize int) error {
-	args := m.Called(author, batchSize)
-	return args.Error(0)
-}
-
-func (m *authorDbMock) GetAuthor(id int) (*entities.Author, error) {
-	args := m.Called(id)
-	return args.Get(0).(*entities.Author), args.Error(1)
-}
 
 func TestGetAllAuthors(t *testing.T) {
 
-	authorDbMock := new(authorDbMock)
+	authorDbMock := new(authorrepo.AuthorRepositoryMock)
 
 	filter := dtos.GetAuthorsFilter{Pagination: dtos.Pagination{Page: 1, Limit: 10}}
 	authorDbMock.On("GetAllAuthors", filter).Return([]entities.Author{{Id: 5, Name: "Joenk"}}, nil)
@@ -48,7 +31,7 @@ func TestGetAllAuthors(t *testing.T) {
 
 func TestGetAllAuthorsError(t *testing.T) {
 
-	authorDbMock := new(authorDbMock)
+	authorDbMock := new(authorrepo.AuthorRepositoryMock)
 
 	filter := dtos.GetAuthorsFilter{Pagination: dtos.Pagination{Page: 1, Limit: 10}}
 	authorDbMock.On("GetAllAuthors", filter).Return([]entities.Author{}, errors.New("Error on test"))
@@ -60,7 +43,7 @@ func TestGetAllAuthorsError(t *testing.T) {
 }
 
 func TestImportAuthorsFromCSVFile(t *testing.T) {
-	authorDbMock := new(authorDbMock)
+	authorDbMock := new(authorrepo.AuthorRepositoryMock)
 
 	authorDbMock.On("CreateAuthorInBatch", mock.Anything, 6).Return(nil)
 
@@ -72,7 +55,7 @@ func TestImportAuthorsFromCSVFile(t *testing.T) {
 }
 
 func TestImportAuthorsFromCSVFileErronOnCreateAuthorInBatch(t *testing.T) {
-	authorDbMock := new(authorDbMock)
+	authorDbMock := new(authorrepo.AuthorRepositoryMock)
 
 	authorDbMock.On("CreateAuthorInBatch", mock.Anything, 6).Return(errors.New("error occurred"))
 
@@ -85,7 +68,7 @@ func TestImportAuthorsFromCSVFileErronOnCreateAuthorInBatch(t *testing.T) {
 }
 
 func TestImportAuthorsFromCSVFileError(t *testing.T) {
-	authorDbMock := new(authorDbMock)
+	authorDbMock := new(authorrepo.AuthorRepositoryMock)
 
 	authorServiceTest := AuthorService{authorDb: authorDbMock}
 
