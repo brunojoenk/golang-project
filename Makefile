@@ -10,10 +10,13 @@ run-main:
 	go run main.go
 
 run-services-dev:
-	docker-compose -f docker-compose-dev.yml up
+	docker-compose -f docker-compose-dev.yml up -d
+
+go-code: run-services-dev
+	go run main.go
 
 tests:
-	go test  ./...
+	go test ./...
 
 tests-coverage:
 	go test -cover ./...
