@@ -72,7 +72,7 @@ make swagger
 - I used Docker;
 - I used Makfile to improves experience on run app;
 
-#### Difficults
+#### Some details about project building
 
 - At the begin, I thought use go-routines/workers to import authors from csv file. But It was slowly to import all authors one by one. So, I changed to use unique key name to avoid duplicate authors and I used insert in batch to import authors.
    - Observation: In branch 'turn-func-concurrence' I did some tests using concurrence/insert in batch to improve response time on import a big list of authors from csv file.
