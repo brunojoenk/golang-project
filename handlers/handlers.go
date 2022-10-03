@@ -14,8 +14,8 @@ import (
 )
 
 type Handler struct {
-	authorController *authorcontroller.AuthorController
-	bookController   *bookcontroller.BookController
+	authorController authorcontroller.IAuthorController
+	bookController   bookcontroller.IBookController
 }
 
 func New(db *gorm.DB) *Handler {
