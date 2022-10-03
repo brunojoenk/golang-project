@@ -79,5 +79,5 @@ make swagger
 
 - On use docker-compose, the host to connect on database is different, when run only container of database, I need use localhost, but when is communicate between two containers, I need use postgres-go and create new network for this communication called golangtestdriver (You can see it on docker-compose.yml).
 
-- To turn easier for manager relations of book/authors, I decided to use Gorm.
+- To turn easier for manager relations of book/authors, I decided to use Gorm (I often use sqlx)
 
