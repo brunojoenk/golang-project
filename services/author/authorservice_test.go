@@ -6,36 +6,23 @@ import (
 	"github/brunojoenk/golang-test/models/entities"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/go-test/deep"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+
+	authorrepomock "github/brunojoenk/golang-test/repository/author/mock"
 )
-
-var authorServiceTest *AuthorService
-
-func init() {
-	db, _, _ := sqlmock.New()
-
-	dialector := postgres.New(postgres.Config{
-		DSN:                  "sqlmock_db_0",
-		DriverName:           "postgres",
-		Conn:                 db,
-		PreferSimpleProtocol: true,
-	})
-	gormDB, _ := gorm.Open(dialector, &gorm.Config{})
-
-	authorServiceTest = NewAuthorService(gormDB)
-}
 
 func TestGetAllAuthors(t *testing.T) {
 
-	authorServiceTest.getAllAuthorsRepository = func(filter dtos.GetAuthorsFilter) ([]entities.Author, error) {
-		return []entities.Author{{Id: 5, Name: "Joenk"}}, nil
-	}
+	authorDbMock := new(authorrepomock.AuthorRepositoryMock)
 
-	resp, err := authorServiceTest.GetAllAuthors(dtos.GetAuthorsFilter{})
+	filter := dtos.GetAuthorsFilter{Pagination: dtos.Pagination{Page: 1, Limit: 10}}
+	authorDbMock.On("GetAllAuthors", filter).Return([]entities.Author{{Id: 5, Name: "Joenk"}}, nil)
+
+	authorServiceTest := authorService{authorDb: authorDbMock}
+
+	resp, err := authorServiceTest.GetAllAuthors(filter)
 	require.NoError(t, err)
 	require.Nil(t, deep.Equal([]dtos.AuthorResponse{{Id: 5, Name: "Joenk"}}, resp.Authors))
 	require.Equal(t, resp.Pagination.Limit, 10)
@@ -44,33 +31,47 @@ func TestGetAllAuthors(t *testing.T) {
 
 func TestGetAllAuthorsError(t *testing.T) {
 
-	authorServiceTest.getAllAuthorsRepository = func(filter dtos.GetAuthorsFilter) ([]entities.Author, error) {
-		return nil, errors.New("Error on test")
-	}
+	authorDbMock := new(authorrepomock.AuthorRepositoryMock)
 
-	_, err := authorServiceTest.GetAllAuthors(dtos.GetAuthorsFilter{})
+	filter := dtos.GetAuthorsFilter{Pagination: dtos.Pagination{Page: 1, Limit: 10}}
+	authorDbMock.On("GetAllAuthors", filter).Return([]entities.Author{}, errors.New("Error on test"))
+
+	authorServiceTest := authorService{authorDb: authorDbMock}
+
+	_, err := authorServiceTest.GetAllAuthors(filter)
 	require.Error(t, err)
 }
 
 func TestImportAuthorsFromCSVFile(t *testing.T) {
-	authorServiceTest.createAuthorInBatchRepo = func(author []entities.Author, batchSize int) error {
-		return nil
-	}
+	authorDbMock := new(authorrepomock.AuthorRepositoryMock)
+
+	authorDbMock.On("CreateAuthorInBatch", mock.Anything, 6).Return(nil)
+
+	authorServiceTest := authorService{authorDb: authorDbMock}
+
 	resp, err := authorServiceTest.ImportAuthorsFromCSVFile("../../data/authorsreduced.csv")
 	require.NoError(t, err)
 	require.Equal(t, 6, resp)
 }
 
 func TestImportAuthorsFromCSVFileErronOnCreateAuthorInBatch(t *testing.T) {
-	authorServiceTest.createAuthorInBatchRepo = func(author []entities.Author, batchSize int) error {
-		return errors.New("error occurred")
-	}
+	authorDbMock := new(authorrepomock.AuthorRepositoryMock)
+
+	authorDbMock.On("CreateAuthorInBatch", mock.Anything, 6).Return(errors.New("error occurred"))
+
+	authorServiceTest := authorService{authorDb: authorDbMock}
+
 	resp, err := authorServiceTest.ImportAuthorsFromCSVFile("../../data/authorsreduced.csv")
+
 	require.Error(t, err)
 	require.Equal(t, 0, resp)
 }
 
 func TestImportAuthorsFromCSVFileError(t *testing.T) {
+	authorDbMock := new(authorrepomock.AuthorRepositoryMock)
+
+	authorServiceTest := authorService{authorDb: authorDbMock}
+
 	_, err := authorServiceTest.ImportAuthorsFromCSVFile("anyfile")
 	require.Error(t, err)
 }

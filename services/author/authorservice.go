@@ -14,24 +14,24 @@ import (
 
 var BATCH_SIZE = 2000
 
-type GetAllAuthors func(filter dtos.GetAuthorsFilter) ([]entities.Author, error)
-type CreateAuthorInBatch func(author []entities.Author, batchSize int) error
+type IAuthorService interface {
+	GetAllAuthors(filter dtos.GetAuthorsFilter) (*dtos.AuthorResponseMetadata, error)
+	ImportAuthorsFromCSVFile(file string) (int, error)
+}
 
-type AuthorService struct {
-	getAllAuthorsRepository GetAllAuthors
-	createAuthorInBatchRepo CreateAuthorInBatch
+type authorService struct {
+	authorDb authorrepo.IAuthorRepository
 }
 
 // NewBookService Service Constructor
-func NewAuthorService(db *gorm.DB) *AuthorService {
-	repo := authorrepo.NewAuthorRepository(db)
-	return &AuthorService{getAllAuthorsRepository: repo.GetAllAuthors, createAuthorInBatchRepo: repo.CreateAuthorInBatch}
+func NewAuthorService(db *gorm.DB) IAuthorService {
+	return &authorService{authorDb: authorrepo.NewAuthorRepository(db)}
 }
 
-func (a *AuthorService) GetAllAuthors(filter dtos.GetAuthorsFilter) (*dtos.AuthorResponseMetadata, error) {
+func (a *authorService) GetAllAuthors(filter dtos.GetAuthorsFilter) (*dtos.AuthorResponseMetadata, error) {
 
 	filter.Pagination.ValidValuesAndSetDefault()
-	authors, err := a.getAllAuthorsRepository(filter)
+	authors, err := a.authorDb.GetAllAuthors(filter)
 	if err != nil {
 		log.Error("Error on get all authors from repositoriy: ", err.Error())
 		return nil, err
@@ -54,7 +54,7 @@ func (a *AuthorService) GetAllAuthors(filter dtos.GetAuthorsFilter) (*dtos.Autho
 	return authorResponseMetada, nil
 }
 
-func (a *AuthorService) ImportAuthorsFromCSVFile(file string) (int, error) {
+func (a *authorService) ImportAuthorsFromCSVFile(file string) (int, error) {
 
 	f, err := os.Open(file)
 
@@ -74,7 +74,7 @@ func (a *AuthorService) ImportAuthorsFromCSVFile(file string) (int, error) {
 
 	worker := func(jobs <-chan []entities.Author, results chan<- []entities.Author) error {
 		for job := range jobs {
-			err := a.createAuthorInBatchRepo(job, len(job))
+			err := a.authorDb.CreateAuthorInBatch(job, len(job))
 			if err != nil {
 				log.Error("Error on create author in batch repository: ", err.Error())
 				return err
@@ -122,7 +122,7 @@ func (a *AuthorService) ImportAuthorsFromCSVFile(file string) (int, error) {
 	return len(authors), errOnBatch
 }
 
-func (a *AuthorService) processRecord(record []string, authorsAddedMap map[string]bool, jobs chan []entities.Author) {
+func (a *authorService) processRecord(record []string, authorsAddedMap map[string]bool, jobs chan []entities.Author) {
 	batchToCreate := make([]entities.Author, 0)
 	for index, name := range record {
 		if a.isAuthorNotAdded(authorsAddedMap, name) {
@@ -136,18 +136,18 @@ func (a *AuthorService) processRecord(record []string, authorsAddedMap map[strin
 	}
 }
 
-func (a *AuthorService) canCreateInBatch(index, recordSize, batchSize int) bool {
+func (a *authorService) canCreateInBatch(index, recordSize, batchSize int) bool {
 	return a.isCounterEqualBatchSize(batchSize) || a.isLastItemToProcess(index, recordSize)
 }
 
-func (a *AuthorService) isCounterEqualBatchSize(batchSize int) bool {
+func (a *authorService) isCounterEqualBatchSize(batchSize int) bool {
 	return batchSize > 0 && batchSize%BATCH_SIZE == 0
 }
 
-func (a *AuthorService) isLastItemToProcess(index, recordSize int) bool {
+func (a *authorService) isLastItemToProcess(index, recordSize int) bool {
 	return index == (recordSize - 1)
 }
 
-func (a *AuthorService) isAuthorNotAdded(authorsAddedMap map[string]bool, name string) bool {
+func (a *authorService) isAuthorNotAdded(authorsAddedMap map[string]bool, name string) bool {
 	return !authorsAddedMap[name]
 }

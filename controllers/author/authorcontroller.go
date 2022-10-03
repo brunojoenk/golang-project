@@ -13,20 +13,18 @@ import (
 	"gorm.io/gorm"
 )
 
-type GetAllAuthors func(filter dtos.GetAuthorsFilter) (*dtos.AuthorResponseMetadata, error)
-type ImportAuthorsFromCSVFile func(file string) (int, error)
+type IAuthorController interface {
+	GetAllAuthors(c echo.Context) error
+	ReadCsvHandler(c echo.Context) error
+}
 
-type AuthorController struct {
-	getAllAuthorsRepo        GetAllAuthors
-	importAuthorsFromCSVFile ImportAuthorsFromCSVFile
+type authorController struct {
+	authorService authorservice.IAuthorService
 }
 
 // NewAuthorController Controller Constructor
-func NewAuthorController(d *gorm.DB) *AuthorController {
-	s := authorservice.NewAuthorService(d)
-	return &AuthorController{
-		getAllAuthorsRepo:        s.GetAllAuthors,
-		importAuthorsFromCSVFile: s.ImportAuthorsFromCSVFile}
+func NewAuthorController(d *gorm.DB) *authorController {
+	return &authorController{authorService: authorservice.NewAuthorService(d)}
 }
 
 // GetAllAuthors godoc
@@ -42,7 +40,7 @@ func NewAuthorController(d *gorm.DB) *AuthorController {
 // @Failure 400 {object} string
 // @Failure 500 {object} string
 // @Router /authors [get]
-func (a *AuthorController) GetAllAuthors(c echo.Context) error {
+func (a *authorController) GetAllAuthors(c echo.Context) error {
 
 	var filter dtos.GetAuthorsFilter
 	err := c.Bind(&filter)
@@ -51,7 +49,7 @@ func (a *AuthorController) GetAllAuthors(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, "Invalid parameter")
 	}
 
-	authorsResponse, err := a.getAllAuthorsRepo(filter)
+	authorsResponse, err := a.authorService.GetAllAuthors(filter)
 	if err != nil {
 		c.Logger().Error("Error get all author: %s", err.Error())
 		return c.JSON(http.StatusInternalServerError, err.Error())
@@ -68,7 +66,7 @@ func (a *AuthorController) GetAllAuthors(c echo.Context) error {
 // @Produce json
 // @Success 200 {array} dtos.AuthorResponseMetadata
 // @Router /authors/import [post]
-func (a *AuthorController) ReadCsvHandler(c echo.Context) error {
+func (a *authorController) ReadCsvHandler(c echo.Context) error {
 
 	authorsFilePath := os.Getenv("AUTHORS_FILE_PATH")
 	if authorsFilePath == "" {
@@ -76,8 +74,7 @@ func (a *AuthorController) ReadCsvHandler(c echo.Context) error {
 		//Set default, safe mode. When run locally, this env is exported on makefile
 		authorsFilePath = "./data/authorsreduced.csv"
 	}
-
-	totalAuthorsAdded, err := a.importAuthorsFromCSVFile(authorsFilePath)
+	totalAuthorsAdded, err := a.authorService.ImportAuthorsFromCSVFile(authorsFilePath)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, fmt.Sprintf("Error on import authors: %s", err.Error()))
 	}

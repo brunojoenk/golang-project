@@ -11,30 +11,13 @@ import (
 	"testing"
 	"time"
 
+	authorservicemock "github/brunojoenk/golang-test/services/author/mock"
+
 	"encoding/json"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/require"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
-
-var authorControllerTest *AuthorController
-
-func init() {
-	db, _, _ := sqlmock.New()
-
-	dialector := postgres.New(postgres.Config{
-		DSN:                  "sqlmock_db_0",
-		DriverName:           "postgres",
-		Conn:                 db,
-		PreferSimpleProtocol: true,
-	})
-	gormDB, _ := gorm.Open(dialector, &gorm.Config{})
-
-	authorControllerTest = NewAuthorController(gormDB)
-}
 
 func TestGetAllAuthors(t *testing.T) {
 	var (
@@ -42,9 +25,11 @@ func TestGetAllAuthors(t *testing.T) {
 		authorName = "bruno"
 		authors    = dtos.AuthorResponseMetadata{Authors: []dtos.AuthorResponse{{Id: authorId, Name: authorName}}, Pagination: dtos.Pagination{Page: 1, Limit: 10}}
 	)
-	authorControllerTest.getAllAuthorsRepo = func(filter dtos.GetAuthorsFilter) (*dtos.AuthorResponseMetadata, error) {
-		return &authors, nil
-	}
+
+	authorServiceMock := new(authorservicemock.AuthorServiceyMock)
+	authorServiceMock.On("GetAllAuthors", dtos.GetAuthorsFilter{}).Return(&authors, nil)
+
+	authorControllerTest := authorController{authorService: authorServiceMock}
 
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -64,6 +49,7 @@ func TestGetAllAuthorsErrorOnFilter(t *testing.T) {
 	request, err := http.NewRequest("GET", "/authors?limit='a'", nil)
 	recorder := httptest.NewRecorder()
 	e := echo.New()
+	authorControllerTest := authorController{}
 	e.GET("/authors", authorControllerTest.GetAllAuthors)
 	e.ServeHTTP(recorder, request)
 
@@ -77,9 +63,10 @@ func TestGetAllAuthorsErrorOnFilter(t *testing.T) {
 
 func TestGetAllAuthorsErrorOnService(t *testing.T) {
 	errExpected := errors.New("error occurred")
-	authorControllerTest.getAllAuthorsRepo = func(filter dtos.GetAuthorsFilter) (*dtos.AuthorResponseMetadata, error) {
-		return nil, errExpected
-	}
+	authorServiceMock := new(authorservicemock.AuthorServiceyMock)
+	authorServiceMock.On("GetAllAuthors", dtos.GetAuthorsFilter{}).Return(&dtos.AuthorResponseMetadata{}, errExpected)
+
+	authorControllerTest := authorController{authorService: authorServiceMock}
 
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -93,11 +80,12 @@ func TestGetAllAuthorsErrorOnService(t *testing.T) {
 }
 
 func TestImportReadCsvHandler(t *testing.T) {
-	expectedFuncCalled := 0
-	authorControllerTest.importAuthorsFromCSVFile = func(file string) (int, error) {
-		expectedFuncCalled = expectedFuncCalled + 1
-		return 0, nil
-	}
+	os.Setenv("AUTHORS_FILE_PATH", "./data/authorsreduced.csv")
+
+	authorServiceMock := new(authorservicemock.AuthorServiceyMock)
+	authorServiceMock.On("ImportAuthorsFromCSVFile", "./data/authorsreduced.csv").Return(6, nil)
+
+	authorControllerTest := authorController{authorService: authorServiceMock}
 
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -110,18 +98,14 @@ func TestImportReadCsvHandler(t *testing.T) {
 
 	//require.ErrorIs(t, errExpected, err)
 	require.Equal(t, http.StatusOK, rec.Code)
-	require.Equal(t, expectedFuncCalled, 1)
 }
 
 func TestImportReadCsvHandlerError(t *testing.T) {
 	os.Setenv("AUTHORS_FILE_PATH", "")
-	expectedFuncCalled := 0
-	fileCalled := ""
-	authorControllerTest.importAuthorsFromCSVFile = func(file string) (int, error) {
-		expectedFuncCalled = expectedFuncCalled + 1
-		fileCalled = file
-		return 0, errors.New("Error occurred")
-	}
+	authorServiceMock := new(authorservicemock.AuthorServiceyMock)
+	authorServiceMock.On("ImportAuthorsFromCSVFile", "./data/authorsreduced.csv").Return(0, errors.New("Error occurred"))
+
+	authorControllerTest := authorController{authorService: authorServiceMock}
 
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -132,6 +116,4 @@ func TestImportReadCsvHandlerError(t *testing.T) {
 
 	//require.ErrorIs(t, errExpected, err)
 	require.Equal(t, http.StatusInternalServerError, rec.Code)
-	require.Equal(t, expectedFuncCalled, 1)
-	require.Equal(t, "./data/authorsreduced.csv", fileCalled)
 }

@@ -14,7 +14,7 @@ This app contains a CRUD to manage books and its authors.
 ```
       - DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres
       - PORT=3000
-      - AUTHORS_FILE_PATH=./data/authors.csv
+      - AUTHORS_FILE_PATH=./data/authorsreduced.csv
 ```
 
 ### How to use commands of Makefile
@@ -34,8 +34,7 @@ make build-run
 
 To run for develop locally
 ```
-make run-services-dev 
-make run-main
+make go-code
 ```
 
 To run unit tests:
@@ -49,6 +48,9 @@ make tests-coverage
 ```
 
 To update docs from swagger
+
+For generate docs of swagger, you need install [swagger-echo](https://github.com/swaggo/echo-swagger#start-using-it)
+
 ```
 make swagger
 ```
@@ -65,17 +67,17 @@ make swagger
 - I used VSCode IDE to code it;
 - I used Postgres database;
 - I used Echo for web framework;
-- I used Swagger to generate doccs of APIs;
+- I used Swagger to generate docs of APIs;
 - I used Gorm ORM;
 - I used Docker;
 - I used Makfile to improves experience on run app;
 
-#### Difficults
+#### Some details about project building
 
 - At the begin, I thought use go-routines/workers to import authors from csv file. But It was slowly to import all authors one by one. So, I changed to use unique key name to avoid duplicate authors and I used insert in batch to import authors.
    - Observation: In branch 'turn-func-concurrence' I did some tests using concurrence/insert in batch to improve response time on import a big list of authors from csv file.
 
 - On use docker-compose, the host to connect on database is different, when run only container of database, I need use localhost, but when is communicate between two containers, I need use postgres-go and create new network for this communication called golangtestdriver (You can see it on docker-compose.yml).
 
-- To turn easier for manager relations of book/authors, I decided to use Gorm.
+- To turn easier for manager relations of book/authors, I decided to use Gorm (I often use sqlx)
 

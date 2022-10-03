@@ -10,13 +10,21 @@ import (
 	"gorm.io/gorm"
 )
 
+type IBookRepository interface {
+	CreateBook(book *entities.Book) error
+	UpdateBook(book *entities.Book, authors []*entities.Author) error
+	GetBook(id int) (*entities.Book, error)
+	GetAllBooks(filter dtos.GetBooksFilter) ([]entities.Book, error)
+	DeleteBook(id int) error
+}
+
 // BookRepository Books Repository
 type BookRepository struct {
 	db *gorm.DB
 }
 
 // NewBooksRepository Repository Constructor
-func NewBookRepository(db *gorm.DB) *BookRepository {
+func NewBookRepository(db *gorm.DB) IBookRepository {
 	return &BookRepository{db: db}
 }
 
