@@ -14,28 +14,21 @@ import (
 	"gorm.io/gorm"
 )
 
-type CreateBook func(bookRequestCreate dtos.BookRequestCreate) error
-type GetAllBooks func(filter dtos.GetBooksFilter) (*dtos.BookResponseMetadata, error)
-type DeleteBook func(id int) error
-type GetBook func(id int) (*dtos.BookResponse, error)
-type UpdateBook func(id int, bookRequestUpdate dtos.BookRequestUpdate) error
+type IBookController interface {
+	CreateBook(c echo.Context) error
+	GetAllBooks(c echo.Context) error
+	DeleteBook(c echo.Context) error
+	GetBook(c echo.Context) error
+	UpdateBook(c echo.Context) error
+}
 
-type BookController struct {
-	createBookRepo  CreateBook
-	getAllBooksRepo GetAllBooks
-	deleteBookRepo  DeleteBook
-	getBookRepo     GetBook
-	updateBookRepo  UpdateBook
+type bookController struct {
+	bookService bookservice.IBookService
 }
 
 // NewBookController Controller Constructor
-func NewBookController(db *gorm.DB) *BookController {
-	repo := bookservice.NewBookService(db)
-	return &BookController{createBookRepo: repo.CreateBook,
-		getAllBooksRepo: repo.GetAllBooks,
-		deleteBookRepo:  repo.DeleteBook,
-		getBookRepo:     repo.GetBook,
-		updateBookRepo:  repo.UpdateBook}
+func NewBookController(db *gorm.DB) IBookController {
+	return &bookController{bookService: bookservice.NewBookService(db)}
 }
 
 // CreateBook godoc
@@ -49,7 +42,7 @@ func NewBookController(db *gorm.DB) *BookController {
 // @Failure 400 {object} string
 // @Failure 500 {object} string
 // @Router /book [post]
-func (b *BookController) CreateBook(c echo.Context) error {
+func (b *bookController) CreateBook(c echo.Context) error {
 
 	bookRequestCreate := new(dtos.BookRequestCreate)
 	if err := c.Bind(bookRequestCreate); err != nil {
@@ -57,7 +50,7 @@ func (b *BookController) CreateBook(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, fmt.Sprintf("Request body to crate a book is invalid: %s", err.Error()))
 	}
 
-	err := b.createBookRepo(*bookRequestCreate)
+	err := b.bookService.CreateBook(*bookRequestCreate)
 
 	if err != nil {
 		if errors.Is(err, utils.ErrAuthorIdNotFound) {
@@ -86,7 +79,7 @@ func (b *BookController) CreateBook(c echo.Context) error {
 // @Failure 400 {object} string
 // @Failure 500 {object} string
 // @Router /books [get]
-func (b *BookController) GetAllBooks(c echo.Context) error {
+func (b *bookController) GetAllBooks(c echo.Context) error {
 	var filter dtos.GetBooksFilter
 	err := c.Bind(&filter)
 	if err != nil {
@@ -94,7 +87,7 @@ func (b *BookController) GetAllBooks(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, fmt.Sprintf("Invalid query parameters: %s", err.Error()))
 	}
 
-	booksResponse, err := b.getAllBooksRepo(filter)
+	booksResponse, err := b.bookService.GetAllBooks(filter)
 
 	if err != nil {
 		c.Logger().Error("Error on get all books: %s", err.Error())
@@ -115,7 +108,7 @@ func (b *BookController) GetAllBooks(c echo.Context) error {
 // @Failure 400 {object} string
 // @Failure 500 {object} string
 // @Router /book/{id} [delete]
-func (b *BookController) DeleteBook(c echo.Context) error {
+func (b *bookController) DeleteBook(c echo.Context) error {
 
 	id, err := strconv.Atoi(c.Param("id"))
 
@@ -124,7 +117,7 @@ func (b *BookController) DeleteBook(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, "Invalid query parameter id")
 	}
 
-	err = b.deleteBookRepo(id)
+	err = b.bookService.DeleteBook(id)
 
 	if err != nil {
 		c.Logger().Error("Error on delete book: %s", err.Error())
@@ -145,7 +138,7 @@ func (b *BookController) DeleteBook(c echo.Context) error {
 // @Failure 400 {object} string
 // @Failure 500 {object} string
 // @Router /book/{id} [get]
-func (b *BookController) GetBook(c echo.Context) error {
+func (b *bookController) GetBook(c echo.Context) error {
 
 	id, err := strconv.Atoi(c.Param("id"))
 
@@ -154,7 +147,7 @@ func (b *BookController) GetBook(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, "Invalid query parameter id")
 	}
 
-	bookResponse, err := b.getBookRepo(id)
+	bookResponse, err := b.bookService.GetBook(id)
 
 	if err != nil {
 		if errors.Is(err, utils.ErrBookIdNotFound) {
@@ -179,7 +172,7 @@ func (b *BookController) GetBook(c echo.Context) error {
 // @Failure 400 {object} string
 // @Failure 500 {object} string
 // @Router /book/{id} [put]
-func (b *BookController) UpdateBook(c echo.Context) error {
+func (b *bookController) UpdateBook(c echo.Context) error {
 
 	id, err := strconv.Atoi(c.Param("id"))
 
@@ -194,7 +187,7 @@ func (b *BookController) UpdateBook(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, fmt.Sprintf("Error on parse body to update book: %s", err.Error()))
 	}
 
-	err = b.updateBookRepo(id, *bookRequestUpdate)
+	err = b.bookService.UpdateBook(id, *bookRequestUpdate)
 
 	if err != nil {
 		if errors.Is(err, utils.ErrAuthorIdNotFound) {

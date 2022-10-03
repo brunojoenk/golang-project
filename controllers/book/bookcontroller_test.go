@@ -9,38 +9,23 @@ import (
 	"github/brunojoenk/golang-test/utils"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
+	bookservicemock "github/brunojoenk/golang-test/services/book/mock"
+
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/require"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
-var bookControllerTest *BookController
-
-func init() {
-	db, _, _ := sqlmock.New()
-
-	dialector := postgres.New(postgres.Config{
-		DSN:                  "sqlmock_db_0",
-		DriverName:           "postgres",
-		Conn:                 db,
-		PreferSimpleProtocol: true,
-	})
-	gormDB, _ := gorm.Open(dialector, &gorm.Config{})
-
-	bookControllerTest = NewBookController(gormDB)
-}
-
 func TestCreateBook(t *testing.T) {
-	bookControllerTest.createBookRepo = func(bookRequestCreate dtos.BookRequestCreate) error {
-		return nil
-	}
+	bookServiceMock := new(bookservicemock.BookServiceMock)
+	bookServiceMock.On("CreateBook", dtos.BookRequestCreate{}).Return(nil)
+
+	bookControllerTest := bookController{bookService: bookServiceMock}
 
 	e := echo.New()
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequest(http.MethodPost, "/book", nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 
@@ -52,13 +37,13 @@ func TestCreateBook(t *testing.T) {
 }
 
 func TestCreateBookErrorOnBody(t *testing.T) {
-
 	jsonStr := `{name: 5}`
 	jsonBody, _ := json.Marshal(jsonStr)
 
 	request, err := http.NewRequest("POST", "/books", bytes.NewBuffer(jsonBody))
 	recorder := httptest.NewRecorder()
 	e := echo.New()
+	bookControllerTest := bookController{}
 	e.POST("/books", bookControllerTest.CreateBook)
 	e.ServeHTTP(recorder, request)
 
@@ -72,9 +57,10 @@ func TestCreateBookErrorOnBody(t *testing.T) {
 
 func TestCreateBookErrorOnService(t *testing.T) {
 	errExpected := errors.New("error occurred")
-	bookControllerTest.createBookRepo = func(bookRequestCreate dtos.BookRequestCreate) error {
-		return errExpected
-	}
+	bookServiceMock := new(bookservicemock.BookServiceMock)
+	bookServiceMock.On("CreateBook", dtos.BookRequestCreate{}).Return(errExpected)
+
+	bookControllerTest := bookController{bookService: bookServiceMock}
 
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -88,10 +74,10 @@ func TestCreateBookErrorOnService(t *testing.T) {
 }
 
 func TestCreateBookWhenAuthorIdIsNotFound(t *testing.T) {
+	bookServiceMock := new(bookservicemock.BookServiceMock)
+	bookServiceMock.On("CreateBook", dtos.BookRequestCreate{}).Return(utils.ErrAuthorIdNotFound)
 
-	bookControllerTest.createBookRepo = func(bookRequestCreate dtos.BookRequestCreate) error {
-		return utils.ErrAuthorIdNotFound
-	}
+	bookControllerTest := bookController{bookService: bookServiceMock}
 
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -113,12 +99,11 @@ func TestGetBook(t *testing.T) {
 		authorName      = "jk rowling"
 	)
 
-	var bookIdCalled int
+	bookServiceMock := new(bookservicemock.BookServiceMock)
+	bookResponse := &dtos.BookResponse{Id: bookId, Name: bookName, Edition: bookEdition, PublicationYear: publicationYear, Authors: authorName}
+	bookServiceMock.On("GetBook", bookId).Return(bookResponse, nil)
 
-	bookControllerTest.getBookRepo = func(id int) (*dtos.BookResponse, error) {
-		bookIdCalled = id
-		return &dtos.BookResponse{Name: bookName, Edition: bookEdition, PublicationYear: publicationYear, Authors: authorName}, nil
-	}
+	bookControllerTest := bookController{bookService: bookServiceMock}
 
 	request, err := http.NewRequest("GET", "/book/12", nil)
 	recorder := httptest.NewRecorder()
@@ -127,28 +112,19 @@ func TestGetBook(t *testing.T) {
 	e.ServeHTTP(recorder, request)
 
 	books := dtos.BookResponse{
-		Name: bookName, Edition: bookEdition, PublicationYear: publicationYear, Authors: authorName,
+		Id: bookId, Name: bookName, Edition: bookEdition, PublicationYear: publicationYear, Authors: authorName,
 	}
 	respExpected, _ := json.Marshal(books)
 	require.Equal(t, fmt.Sprintf("%s%s", respExpected, "\n"), recorder.Body.String())
 
 	require.NoError(t, err)
 	require.Equal(t, http.StatusOK, recorder.Code)
-	require.Equal(t, bookId, bookIdCalled)
 
 }
 
 func TestGetBookErrorParameterId(t *testing.T) {
-	var (
-		bookName        = "harry"
-		bookEdition     = "first"
-		publicationYear = 2022
-		authorName      = "jk rowling"
-	)
-
-	bookControllerTest.getBookRepo = func(id int) (*dtos.BookResponse, error) {
-		return &dtos.BookResponse{Name: bookName, Edition: bookEdition, PublicationYear: publicationYear, Authors: authorName}, nil
-	}
+	bookServiceMock := new(bookservicemock.BookServiceMock)
+	bookControllerTest := bookController{bookService: bookServiceMock}
 
 	request, err := http.NewRequest("GET", "/book/a", nil)
 	recorder := httptest.NewRecorder()
@@ -162,64 +138,58 @@ func TestGetBookErrorParameterId(t *testing.T) {
 }
 
 func TestGetBookErrorOnQueryDatabase(t *testing.T) {
-	var (
-		bookId = 12
-	)
-
-	var bookIdCalled int
 	errExpected := errors.New("error occurred")
+	bookId := 12
 
-	bookControllerTest.getBookRepo = func(id int) (*dtos.BookResponse, error) {
-		bookIdCalled = id
-		return nil, errExpected
-	}
+	bookServiceMock := new(bookservicemock.BookServiceMock)
+	bookServiceMock.On("GetBook", bookId).Return(&dtos.BookResponse{}, errExpected)
 
-	request, _ := http.NewRequest("GET", "/book/12", nil)
+	bookControllerTest := bookController{bookService: bookServiceMock}
+
+	request, _ := http.NewRequest("GET", fmt.Sprintf("/book/%v", bookId), nil)
 	recorder := httptest.NewRecorder()
 	e := echo.New()
 	e.GET("/book/:id", bookControllerTest.GetBook)
 	e.ServeHTTP(recorder, request)
 
 	require.Equal(t, http.StatusInternalServerError, recorder.Code)
-	require.Equal(t, bookId, bookIdCalled)
 
 }
 
 func TestGetBookErrorWhenAuthorIdNotFound(t *testing.T) {
-	var (
-		bookId = 12
-	)
+	bookId := 12
 
-	var bookIdCalled int
+	bookServiceMock := new(bookservicemock.BookServiceMock)
+	bookServiceMock.On("GetBook", bookId).Return(&dtos.BookResponse{}, utils.ErrBookIdNotFound)
 
-	bookControllerTest.getBookRepo = func(id int) (*dtos.BookResponse, error) {
-		bookIdCalled = id
-		return nil, utils.ErrBookIdNotFound
-	}
+	bookControllerTest := bookController{bookService: bookServiceMock}
 
-	request, _ := http.NewRequest("GET", "/book/12", nil)
+	request, _ := http.NewRequest("GET", fmt.Sprintf("/book/%v", bookId), nil)
 	recorder := httptest.NewRecorder()
 	e := echo.New()
 	e.GET("/book/:id", bookControllerTest.GetBook)
 	e.ServeHTTP(recorder, request)
 
 	require.Equal(t, http.StatusBadRequest, recorder.Code)
-	require.Equal(t, bookId, bookIdCalled)
 
 }
 
 func TestGetAllBook(t *testing.T) {
 	var (
+		bookId          = 12
 		bookName        = "harry"
 		bookEdition     = "first"
 		publicationYear = 2022
 		authorName      = "jk rowling"
 	)
 
-	bookControllerTest.getAllBooksRepo = func(filter dtos.GetBooksFilter) (*dtos.BookResponseMetadata, error) {
-		return &dtos.BookResponseMetadata{Books: []dtos.BookResponse{{Name: bookName, Edition: bookEdition, PublicationYear: publicationYear, Authors: authorName}},
-			Pagination: dtos.Pagination{Page: 1, Limit: 10}}, nil
-	}
+	booksResponse := &dtos.BookResponseMetadata{Books: []dtos.BookResponse{{Id: bookId, Name: bookName, Edition: bookEdition, PublicationYear: publicationYear, Authors: authorName}},
+		Pagination: dtos.Pagination{Page: 1, Limit: 10}}
+
+	bookServiceMock := new(bookservicemock.BookServiceMock)
+	bookServiceMock.On("GetAllBooks", dtos.GetBooksFilter{}).Return(booksResponse, nil)
+
+	bookControllerTest := bookController{bookService: bookServiceMock}
 
 	request, err := http.NewRequest("GET", "/books", nil)
 	recorder := httptest.NewRecorder()
@@ -227,8 +197,7 @@ func TestGetAllBook(t *testing.T) {
 	e.GET("/books", bookControllerTest.GetAllBooks)
 	e.ServeHTTP(recorder, request)
 
-	books := &dtos.BookResponseMetadata{Books: []dtos.BookResponse{{Name: bookName, Edition: bookEdition, PublicationYear: publicationYear, Authors: authorName}}, Pagination: dtos.Pagination{Page: 1, Limit: 10}}
-	respExpected, _ := json.Marshal(books)
+	respExpected, _ := json.Marshal(booksResponse)
 	require.Equal(t, fmt.Sprintf("%s%s", respExpected, "\n"), recorder.Body.String())
 
 	require.NoError(t, err)
@@ -237,17 +206,7 @@ func TestGetAllBook(t *testing.T) {
 }
 
 func TestGetAllBookErrorOnFilter(t *testing.T) {
-	var (
-		bookName        = "harry"
-		bookEdition     = "first"
-		publicationYear = 2022
-		authorName      = "jk rowling"
-	)
-
-	bookControllerTest.getAllBooksRepo = func(filter dtos.GetBooksFilter) (*dtos.BookResponseMetadata, error) {
-		return &dtos.BookResponseMetadata{Books: []dtos.BookResponse{{Name: bookName, Edition: bookEdition, PublicationYear: publicationYear, Authors: authorName}},
-			Pagination: dtos.Pagination{Page: 1, Limit: 10}}, nil
-	}
+	bookControllerTest := bookController{}
 
 	request, _ := http.NewRequest("GET", "/books?publication_year=joenk", nil)
 	recorder := httptest.NewRecorder()
@@ -261,9 +220,11 @@ func TestGetAllBookErrorOnFilter(t *testing.T) {
 
 func TestGetAllBookErrorOnService(t *testing.T) {
 	errExpected := errors.New("error occurred")
-	bookControllerTest.getAllBooksRepo = func(filter dtos.GetBooksFilter) (*dtos.BookResponseMetadata, error) {
-		return nil, errExpected
-	}
+
+	bookServiceMock := new(bookservicemock.BookServiceMock)
+	bookServiceMock.On("GetAllBooks", dtos.GetBooksFilter{}).Return(&dtos.BookResponseMetadata{}, errExpected)
+
+	bookControllerTest := bookController{bookService: bookServiceMock}
 
 	request, _ := http.NewRequest("GET", "/books", nil)
 	recorder := httptest.NewRecorder()
@@ -276,18 +237,14 @@ func TestGetAllBookErrorOnService(t *testing.T) {
 }
 
 func TestDeleteBook(t *testing.T) {
-	var (
-		bookId = 12
-	)
+	bookId := 12
 
-	var bookIdCalled int
+	bookServiceMock := new(bookservicemock.BookServiceMock)
+	bookServiceMock.On("DeleteBook", bookId).Return(nil)
 
-	bookControllerTest.deleteBookRepo = func(id int) error {
-		bookIdCalled = id
-		return nil
-	}
+	bookControllerTest := bookController{bookService: bookServiceMock}
 
-	request, err := http.NewRequest("DELETE", "/book/12", nil)
+	request, err := http.NewRequest("DELETE", fmt.Sprintf("/book/%v", bookId), nil)
 	recorder := httptest.NewRecorder()
 	e := echo.New()
 	e.DELETE("/book/:id", bookControllerTest.DeleteBook)
@@ -295,15 +252,11 @@ func TestDeleteBook(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, http.StatusOK, recorder.Code)
-	require.Equal(t, bookId, bookIdCalled)
 
 }
 
 func TestDeleteBookErrorOnInvalidParameterId(t *testing.T) {
-
-	bookControllerTest.deleteBookRepo = func(id int) error {
-		return nil
-	}
+	bookControllerTest := bookController{}
 
 	request, err := http.NewRequest("DELETE", "/book/a", nil)
 	recorder := httptest.NewRecorder()
@@ -317,19 +270,16 @@ func TestDeleteBookErrorOnInvalidParameterId(t *testing.T) {
 }
 
 func TestDeleteBookErrorOnService(t *testing.T) {
-	var (
-		bookId = 12
-	)
+	bookId := 12
 
-	var bookIdCalled int
 	errExpected := errors.New("error occurred")
 
-	bookControllerTest.deleteBookRepo = func(id int) error {
-		bookIdCalled = id
-		return errExpected
-	}
+	bookServiceMock := new(bookservicemock.BookServiceMock)
+	bookServiceMock.On("DeleteBook", bookId).Return(errExpected)
 
-	request, err := http.NewRequest("DELETE", "/book/12", nil)
+	bookControllerTest := bookController{bookService: bookServiceMock}
+
+	request, err := http.NewRequest("DELETE", fmt.Sprintf("/book/%v", bookId), nil)
 	recorder := httptest.NewRecorder()
 	e := echo.New()
 	e.DELETE("/book/:id", bookControllerTest.DeleteBook)
@@ -337,23 +287,23 @@ func TestDeleteBookErrorOnService(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, http.StatusInternalServerError, recorder.Code)
-	require.Equal(t, bookId, bookIdCalled)
 
 }
 
 func TestUpdateBook(t *testing.T) {
-	var (
-		bookId = 12
-	)
+	bookId := 12
 
-	var bookIdCalled int
+	bodyRequest := strings.NewReader(`{"name":"Harry Potter 2","edition":"Segunda edição","publication_year":2022,"authors":[5]}`)
+	bookRequestUpdate := dtos.BookRequestUpdate{Name: "Harry Potter 2", Edition: "Segunda edição", PublicationYear: 2022, Authors: []int{5}}
 
-	bookControllerTest.updateBookRepo = func(id int, bookRequestUpdate dtos.BookRequestUpdate) error {
-		bookIdCalled = id
-		return nil
-	}
+	bookServiceMock := new(bookservicemock.BookServiceMock)
+	bookServiceMock.On("UpdateBook", bookId, bookRequestUpdate).Return(nil)
 
-	request, err := http.NewRequest("PUT", "/book/12", nil)
+	bookControllerTest := bookController{bookService: bookServiceMock}
+
+	request, err := http.NewRequest("PUT", fmt.Sprintf("/book/%v", bookId), bodyRequest)
+	request.Header.Add("Content-type", "application/json")
+
 	recorder := httptest.NewRecorder()
 	e := echo.New()
 	e.PUT("/book/:id", bookControllerTest.UpdateBook)
@@ -361,15 +311,11 @@ func TestUpdateBook(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, http.StatusOK, recorder.Code)
-	require.Equal(t, bookId, bookIdCalled)
 
 }
 
 func TestUpdateBookErrorOnParametersIdNotFound(t *testing.T) {
-
-	bookControllerTest.updateBookRepo = func(id int, bookRequestUpdate dtos.BookRequestUpdate) error {
-		return nil
-	}
+	bookControllerTest := bookController{}
 
 	request, err := http.NewRequest("PUT", "/book/a", nil)
 	recorder := httptest.NewRecorder()
@@ -383,11 +329,13 @@ func TestUpdateBookErrorOnParametersIdNotFound(t *testing.T) {
 }
 
 func TestUpdateBookErrorOnBody(t *testing.T) {
+	bookControllerTest := bookController{}
 
-	jsonStr := `{name: 5}`
-	jsonBody, _ := json.Marshal(jsonStr)
+	bodyRequest := strings.NewReader(`{name: 5}`)
 
-	request, err := http.NewRequest("PUT", "/book/12", bytes.NewBuffer(jsonBody))
+	request, err := http.NewRequest("PUT", "/book/12", bodyRequest)
+	request.Header.Add("Content-type", "application/json")
+
 	recorder := httptest.NewRecorder()
 	e := echo.New()
 	e.PUT("/book/:id", bookControllerTest.UpdateBook)
@@ -399,12 +347,19 @@ func TestUpdateBookErrorOnBody(t *testing.T) {
 }
 
 func TestUpdateBookErrorOnService(t *testing.T) {
+	bookId := 12
 
-	bookControllerTest.updateBookRepo = func(id int, bookRequestUpdate dtos.BookRequestUpdate) error {
-		return errors.New("error occurred")
-	}
+	bodyRequest := strings.NewReader(`{"name":"Harry Potter 2","edition":"Segunda edição","publication_year":2022,"authors":[5]}`)
+	bookRequestUpdate := dtos.BookRequestUpdate{Name: "Harry Potter 2", Edition: "Segunda edição", PublicationYear: 2022, Authors: []int{5}}
 
-	request, err := http.NewRequest("PUT", "/book/12", nil)
+	bookServiceMock := new(bookservicemock.BookServiceMock)
+	bookServiceMock.On("UpdateBook", bookId, bookRequestUpdate).Return(errors.New("error occurred"))
+
+	bookControllerTest := bookController{bookService: bookServiceMock}
+
+	request, err := http.NewRequest("PUT", fmt.Sprintf("/book/%v", bookId), bodyRequest)
+	request.Header.Add("Content-type", "application/json")
+
 	recorder := httptest.NewRecorder()
 	e := echo.New()
 	e.PUT("/book/:id", bookControllerTest.UpdateBook)
@@ -416,12 +371,19 @@ func TestUpdateBookErrorOnService(t *testing.T) {
 }
 
 func TestUpdateBookErrorWhenAuthorIdNotFound(t *testing.T) {
+	bookId := 12
 
-	bookControllerTest.updateBookRepo = func(id int, bookRequestUpdate dtos.BookRequestUpdate) error {
-		return utils.ErrAuthorIdNotFound
-	}
+	bodyRequest := strings.NewReader(`{"name":"Harry Potter 2","edition":"Segunda edição","publication_year":2022,"authors":[5]}`)
+	bookRequestUpdate := dtos.BookRequestUpdate{Name: "Harry Potter 2", Edition: "Segunda edição", PublicationYear: 2022, Authors: []int{5}}
 
-	request, err := http.NewRequest("PUT", "/book/12", nil)
+	bookServiceMock := new(bookservicemock.BookServiceMock)
+	bookServiceMock.On("UpdateBook", bookId, bookRequestUpdate).Return(utils.ErrAuthorIdNotFound)
+
+	bookControllerTest := bookController{bookService: bookServiceMock}
+
+	request, err := http.NewRequest("PUT", fmt.Sprintf("/book/%v", bookId), bodyRequest)
+	request.Header.Add("Content-type", "application/json")
+
 	recorder := httptest.NewRecorder()
 	e := echo.New()
 	e.PUT("/book/:id", bookControllerTest.UpdateBook)
