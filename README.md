@@ -74,7 +74,7 @@ make swagger
 
 #### Some details about project building
 
-- At the begin, I thought use go-routines/workers to import authors from csv file. But It was slowly to import all authors one by one. So, I changed to use unique key name to avoid duplicate authors and I used insert in batch to import authors.
+- At the begin, I thought use go-routines/workers to import authors from csv file. But It was very slowly to import all authors one by one even using concurrency. So, I changed to use unique key name to avoid duplicate authors and I used insert in batch to import authors.
    - Observation: In branch 'turn-func-concurrence' I did some tests using concurrence/insert in batch to improve response time on import a big list of authors from csv file.
 
 - On use docker-compose, the host to connect on database is different, when run only container of database, I need use localhost, but when is communicate between two containers, I need use postgres-go and create new network for this communication called golangtestdriver (You can see it on docker-compose.yml).
