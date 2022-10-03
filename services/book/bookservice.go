@@ -12,40 +12,33 @@ import (
 	"gorm.io/gorm"
 )
 
-type GetAuthor func(id int) (*entities.Author, error)
-type CreateBook func(book *entities.Book) error
-type GetAllBooks func(filter dtos.GetBooksFilter) ([]entities.Book, error)
-type DeleteBook func(id int) error
-type GetBook func(id int) (*entities.Book, error)
-type UpdateBook func(book *entities.Book, authors []*entities.Author) error
+type IBookService interface {
+	CreateBook(bookRequestCreate dtos.BookRequestCreate) error
+	GetAllBooks(filter dtos.GetBooksFilter) (*dtos.BookResponseMetadata, error)
+	DeleteBook(id int) error
+	GetBook(id int) (*dtos.BookResponse, error)
+	UpdateBook(id int, bookRequestUpdate dtos.BookRequestUpdate) error
+}
 
-type BookService struct {
-	getAuthorRepo   GetAuthor
-	createBookRepo  CreateBook
-	getAllBooksRepo GetAllBooks
-	deleteBookRepo  DeleteBook
-	getBookRepo     GetBook
-	updateBookRepo  UpdateBook
+type bookService struct {
+	authorDb authorrepo.IAuthorRepository
+	bookDb   bookrepo.IBookRepository
 }
 
 // NewBookService Service Constructor
-func NewBookService(db *gorm.DB) *BookService {
-	bookRepo := bookrepo.NewBookRepository(db)
+func NewBookService(db *gorm.DB) IBookService {
 	authorRepo := authorrepo.NewAuthorRepository(db)
-	return &BookService{
-		getAuthorRepo:   authorRepo.GetAuthor,
-		createBookRepo:  bookRepo.CreateBook,
-		getAllBooksRepo: bookRepo.GetAllBooks,
-		deleteBookRepo:  bookRepo.DeleteBook,
-		getBookRepo:     bookRepo.GetBook,
-		updateBookRepo:  bookRepo.UpdateBook,
+	bookRepo := bookrepo.NewBookRepository(db)
+	return &bookService{
+		authorDb: authorRepo,
+		bookDb:   bookRepo,
 	}
 }
 
-func (b *BookService) CreateBook(bookRequestCreate dtos.BookRequestCreate) error {
+func (b *bookService) CreateBook(bookRequestCreate dtos.BookRequestCreate) error {
 	var authors []*entities.Author
 	for _, authorId := range bookRequestCreate.Authors {
-		author, err := b.getAuthorRepo(authorId)
+		author, err := b.authorDb.GetAuthor(authorId)
 		if err != nil {
 			log.Error("Error on get author from repo: ", err.Error())
 			return err
@@ -63,13 +56,13 @@ func (b *BookService) CreateBook(bookRequestCreate dtos.BookRequestCreate) error
 		Authors:         authors,
 	}
 
-	return b.createBookRepo(&book)
+	return b.bookDb.CreateBook(&book)
 }
 
-func (b *BookService) GetAllBooks(filter dtos.GetBooksFilter) (*dtos.BookResponseMetadata, error) {
+func (b *bookService) GetAllBooks(filter dtos.GetBooksFilter) (*dtos.BookResponseMetadata, error) {
 
 	filter.Pagination.ValidValuesAndSetDefault()
-	books, err := b.getAllBooksRepo(filter)
+	books, err := b.bookDb.GetAllBooks(filter)
 	if err != nil {
 		log.Error("Error on get all books from repo: ", err.Error())
 		return nil, err
@@ -106,12 +99,12 @@ func (b *BookService) GetAllBooks(filter dtos.GetBooksFilter) (*dtos.BookRespons
 	return booksResponseMetadata, nil
 }
 
-func (b *BookService) DeleteBook(id int) error {
-	return b.deleteBookRepo(id)
+func (b *bookService) DeleteBook(id int) error {
+	return b.bookDb.DeleteBook(id)
 }
 
-func (b *BookService) GetBook(id int) (*dtos.BookResponse, error) {
-	book, err := b.getBookRepo(id)
+func (b *bookService) GetBook(id int) (*dtos.BookResponse, error) {
+	book, err := b.bookDb.GetBook(id)
 
 	if err != nil {
 		log.Error("Error on get book from repo: ", err.Error())
@@ -142,8 +135,8 @@ func (b *BookService) GetBook(id int) (*dtos.BookResponse, error) {
 	return &bookResponse, nil
 }
 
-func (b *BookService) UpdateBook(id int, bookRequestUpdate dtos.BookRequestUpdate) error {
-	book, err := b.getBookRepo(id)
+func (b *bookService) UpdateBook(id int, bookRequestUpdate dtos.BookRequestUpdate) error {
+	book, err := b.bookDb.GetBook(id)
 
 	if err != nil {
 		log.Error("Error on get book from repo: ", err.Error())
@@ -152,7 +145,7 @@ func (b *BookService) UpdateBook(id int, bookRequestUpdate dtos.BookRequestUpdat
 
 	var authors []*entities.Author
 	for _, authorId := range bookRequestUpdate.Authors {
-		author, err := b.getAuthorRepo(authorId)
+		author, err := b.authorDb.GetAuthor(authorId)
 		if err != nil {
 			log.Error("Error on get author from repo: ", err.Error())
 			return err
@@ -167,7 +160,7 @@ func (b *BookService) UpdateBook(id int, bookRequestUpdate dtos.BookRequestUpdat
 	book.Edition = bookRequestUpdate.Edition
 	book.PublicationYear = bookRequestUpdate.PublicationYear
 
-	err = b.updateBookRepo(book, authors)
+	err = b.bookDb.UpdateBook(book, authors)
 
 	if err != nil {
 		log.Error("Error on update book from repo: ", err.Error())
