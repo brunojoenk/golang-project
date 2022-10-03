@@ -52,7 +52,7 @@ func (s *Suite) SetupSuite() {
 	s.DB, err = gorm.Open(dialector, &gorm.Config{})
 	require.NoError(s.T(), err)
 
-	s.repository = NewBookRepository(s.DB)
+	s.repository = &BookRepository{s.DB}
 }
 
 func (s *Suite) Test_repository_Create_Book() {
