@@ -19,14 +19,14 @@ func TestCreateBook(t *testing.T) {
 		publicationYear = 2022
 		authorId        = 5
 		authorName      = "joenk"
-		authors         = []*entities.Author{{Id: authorId, Name: authorName}}
+		authors         = []entities.Author{{Id: authorId, Name: authorName}}
 	)
 
 	authorDbMock := new(authorrepomock.AuthorRepositoryMock)
 	authorDbMock.On("GetAuthor", authorId).Return(authors[0], nil)
 
 	bookDbMock := new(bookrepomock.BookRepositoryMock)
-	bookDbMock.On("CreateBook", &entities.Book{Name: name, Edition: edition, PublicationYear: publicationYear, Authors: authors}).Return(nil)
+	bookDbMock.On("CreateBook", entities.Book{Name: name, Edition: edition, PublicationYear: publicationYear, Authors: authors}).Return(nil)
 
 	bookServiceTest := bookService{authorDb: authorDbMock, bookDb: bookDbMock}
 	err := bookServiceTest.CreateBook(dtos.BookRequestCreate{Name: name, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
@@ -45,7 +45,7 @@ func TestCreateBook_Error(t *testing.T) {
 	errExpected := errors.New("error occurred")
 
 	authorDbMock := new(authorrepomock.AuthorRepositoryMock)
-	authorDbMock.On("GetAuthor", authorId).Return(&entities.Author{}, errExpected)
+	authorDbMock.On("GetAuthor", authorId).Return(entities.Author{}, errExpected)
 
 	bookServiceTest := bookService{authorDb: authorDbMock}
 	err := bookServiceTest.CreateBook(dtos.BookRequestCreate{Name: name, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
@@ -62,7 +62,7 @@ func TestCreateBookErrorWhensIsAuthorIdNotFound(t *testing.T) {
 	)
 
 	authorDbMock := new(authorrepomock.AuthorRepositoryMock)
-	authorDbMock.On("GetAuthor", authorId).Return(&entities.Author{Id: 0}, nil)
+	authorDbMock.On("GetAuthor", authorId).Return(entities.Author{Id: 0}, nil)
 
 	bookServiceTest := bookService{authorDb: authorDbMock}
 	err := bookServiceTest.CreateBook(dtos.BookRequestCreate{Name: name, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
@@ -80,7 +80,7 @@ func TestGetAllBooks(t *testing.T) {
 		authorName        = "joenk"
 		anotherAuthorId   = 7
 		anotherAuthorName = "bruno"
-		authors           = []*entities.Author{{Id: authorId, Name: authorName}, {Id: anotherAuthorId, Name: anotherAuthorName}}
+		authors           = []entities.Author{{Id: authorId, Name: authorName}, {Id: anotherAuthorId, Name: anotherAuthorName}}
 	)
 
 	filter := dtos.GetBooksFilter{Pagination: dtos.Pagination{Page: 1, Limit: 10}}
@@ -150,11 +150,11 @@ func TestGetBook(t *testing.T) {
 		authorName        = "joenk"
 		anotherAuthorId   = 7
 		anotherAuthorName = "bruno"
-		authors           = []*entities.Author{{Id: authorId, Name: authorName}, {Id: anotherAuthorId, Name: anotherAuthorName}}
+		authors           = []entities.Author{{Id: authorId, Name: authorName}, {Id: anotherAuthorId, Name: anotherAuthorName}}
 	)
 
 	bookDbMock := new(bookrepomock.BookRepositoryMock)
-	bookDbMock.On("GetBook", bookId).Return(&entities.Book{Id: bookId, Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: authors}, nil)
+	bookDbMock.On("GetBook", bookId).Return(entities.Book{Id: bookId, Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: authors}, nil)
 
 	bookServiceTest := bookService{bookDb: bookDbMock}
 	resp, err := bookServiceTest.GetBook(bookId)
@@ -174,7 +174,7 @@ func TestGetBookError(t *testing.T) {
 	errExpected := errors.New("error occurred")
 
 	bookDbMock := new(bookrepomock.BookRepositoryMock)
-	bookDbMock.On("GetBook", bookId).Return(&entities.Book{}, errExpected)
+	bookDbMock.On("GetBook", bookId).Return(entities.Book{}, errExpected)
 
 	bookServiceTest := bookService{bookDb: bookDbMock}
 	_, err := bookServiceTest.GetBook(bookId)
@@ -188,7 +188,7 @@ func TestGetBookIdNotFound(t *testing.T) {
 	)
 
 	bookDbMock := new(bookrepomock.BookRepositoryMock)
-	bookDbMock.On("GetBook", bookId).Return(&entities.Book{Id: 0}, nil)
+	bookDbMock.On("GetBook", bookId).Return(entities.Book{Id: 0}, nil)
 
 	bookServiceTest := bookService{bookDb: bookDbMock}
 	_, err := bookServiceTest.GetBook(bookId)
@@ -204,8 +204,8 @@ func TestUpdateBook(t *testing.T) {
 		publicationYear = 2022
 		authorId        = 5
 		authorName      = "joenk"
-		authors         = []*entities.Author{{Id: authorId, Name: authorName}}
-		book            = &entities.Book{Id: bookId, Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: authors}
+		authors         = []entities.Author{{Id: authorId, Name: authorName}}
+		book            = entities.Book{Id: bookId, Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: authors}
 	)
 
 	bookDbMock := new(bookrepomock.BookRepositoryMock)
@@ -233,7 +233,7 @@ func TestUpdateBookErrorOnGetBook(t *testing.T) {
 	errExpected := errors.New("error occurred")
 
 	bookDbMock := new(bookrepomock.BookRepositoryMock)
-	bookDbMock.On("GetBook", bookId).Return(&entities.Book{}, errExpected)
+	bookDbMock.On("GetBook", bookId).Return(entities.Book{}, errExpected)
 
 	bookServiceTest := bookService{bookDb: bookDbMock}
 	err := bookServiceTest.UpdateBook(bookId, dtos.BookRequestUpdate{Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
@@ -249,16 +249,16 @@ func TestUpdateBookErrorOnGetAuthor(t *testing.T) {
 		publicationYear = 2022
 		authorId        = 5
 		authorName      = "joenk"
-		authors         = []*entities.Author{{Id: authorId, Name: authorName}}
+		authors         = []entities.Author{{Id: authorId, Name: authorName}}
 	)
 
 	errExpected := errors.New("error occurred")
 
 	bookDbMock := new(bookrepomock.BookRepositoryMock)
-	bookDbMock.On("GetBook", bookId).Return(&entities.Book{Id: bookId, Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: authors}, nil)
+	bookDbMock.On("GetBook", bookId).Return(entities.Book{Id: bookId, Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: authors}, nil)
 
 	authorDbMock := new(authorrepomock.AuthorRepositoryMock)
-	authorDbMock.On("GetAuthor", authorId).Return(&entities.Author{}, errExpected)
+	authorDbMock.On("GetAuthor", authorId).Return(entities.Author{}, errExpected)
 
 	bookServiceTest := bookService{bookDb: bookDbMock, authorDb: authorDbMock}
 	err := bookServiceTest.UpdateBook(bookId, dtos.BookRequestUpdate{Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
@@ -274,14 +274,14 @@ func TestUpdateBookErrorOnAuthorIdNotFound(t *testing.T) {
 		publicationYear = 2022
 		authorId        = 5
 		authorName      = "joenk"
-		authors         = []*entities.Author{{Id: authorId, Name: authorName}}
+		authors         = []entities.Author{{Id: authorId, Name: authorName}}
 	)
 
 	bookDbMock := new(bookrepomock.BookRepositoryMock)
-	bookDbMock.On("GetBook", bookId).Return(&entities.Book{Id: bookId, Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: authors}, nil)
+	bookDbMock.On("GetBook", bookId).Return(entities.Book{Id: bookId, Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: authors}, nil)
 
 	authorDbMock := new(authorrepomock.AuthorRepositoryMock)
-	authorDbMock.On("GetAuthor", authorId).Return(&entities.Author{Id: 0}, nil)
+	authorDbMock.On("GetAuthor", authorId).Return(entities.Author{Id: 0}, nil)
 
 	bookServiceTest := bookService{bookDb: bookDbMock, authorDb: authorDbMock}
 	err := bookServiceTest.UpdateBook(bookId, dtos.BookRequestUpdate{Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
@@ -297,8 +297,8 @@ func TestUpdateBookErrorOnUpdate(t *testing.T) {
 		publicationYear = 2022
 		authorId        = 5
 		authorName      = "joenk"
-		authors         = []*entities.Author{{Id: authorId, Name: authorName}}
-		book            = &entities.Book{Id: bookId, Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: authors}
+		authors         = []entities.Author{{Id: authorId, Name: authorName}}
+		book            = entities.Book{Id: bookId, Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: authors}
 	)
 
 	errExpected := errors.New("error occurred")

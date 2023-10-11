@@ -11,7 +11,7 @@ import (
 
 type IAuthorRepository interface {
 	CreateAuthorInBatch(author []entities.Author, batchSize int) error
-	GetAuthor(id int) (*entities.Author, error)
+	GetAuthor(id int) (entities.Author, error)
 	GetAllAuthors(filter dtos.GetAuthorsFilter) ([]entities.Author, error)
 }
 
@@ -35,16 +35,16 @@ func (a *AuthorRepository) CreateAuthorInBatch(author []entities.Author, batchSi
 	return nil
 }
 
-func (a *AuthorRepository) GetAuthor(id int) (*entities.Author, error) {
+func (a *AuthorRepository) GetAuthor(id int) (entities.Author, error) {
 
 	var author entities.Author
 
 	if result := a.db.Find(&author, id); result.Error != nil {
 		log.Error("Error on get author: ", result.Error.Error())
-		return nil, result.Error
+		return author, result.Error
 	}
 
-	return &author, nil
+	return author, nil
 }
 
 func (a *AuthorRepository) GetAllAuthors(filter dtos.GetAuthorsFilter) ([]entities.Author, error) {

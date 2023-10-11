@@ -23,9 +23,9 @@ func (m *BookServiceMock) CreateBook(bookRequestCreate dtos.BookRequestCreate) e
 	return args.Error(0)
 }
 
-func (m *BookServiceMock) GetAllBooks(filter dtos.GetBooksFilter) (*dtos.BookResponseMetadata, error) {
+func (m *BookServiceMock) GetAllBooks(filter dtos.GetBooksFilter) (dtos.BookResponseMetadata, error) {
 	args := m.Called(filter)
-	return args.Get(0).(*dtos.BookResponseMetadata), args.Error(1)
+	return args.Get(0).(dtos.BookResponseMetadata), args.Error(1)
 }
 
 func (m *BookServiceMock) DeleteBook(id int) error {
@@ -33,9 +33,9 @@ func (m *BookServiceMock) DeleteBook(id int) error {
 	return args.Error(0)
 }
 
-func (m *BookServiceMock) GetBook(id int) (*dtos.BookResponse, error) {
+func (m *BookServiceMock) GetBook(id int) (dtos.BookResponse, error) {
 	args := m.Called(id)
-	return args.Get(0).(*dtos.BookResponse), args.Error(1)
+	return args.Get(0).(dtos.BookResponse), args.Error(1)
 }
 
 func (m *BookServiceMock) UpdateBook(id int, bookRequestUpdate dtos.BookRequestUpdate) error {

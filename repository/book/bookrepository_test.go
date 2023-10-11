@@ -86,11 +86,11 @@ func (s *Suite) Test_repository_Create_Book() {
 
 	s.mock.ExpectCommit()
 
-	err := s.repository.CreateBook(&entities.Book{
+	err := s.repository.CreateBook(entities.Book{
 		Name:            name,
 		Edition:         edition,
 		PublicationYear: publicationYear,
-		Authors:         []*entities.Author{{Id: authorId, Name: authorName}}})
+		Authors:         []entities.Author{{Id: authorId, Name: authorName}}})
 
 	require.NoError(s.T(), err)
 }
@@ -133,11 +133,11 @@ func (s *Suite) Test_repository_Update_Book() {
 
 	s.mock.ExpectCommit()
 
-	err := s.repository.UpdateBook(&entities.Book{
+	err := s.repository.UpdateBook(entities.Book{
 		Id:              bookId,
 		Name:            name,
 		Edition:         edition,
-		PublicationYear: publicationYear}, []*entities.Author{{Id: authorId, Name: authorName}})
+		PublicationYear: publicationYear}, []entities.Author{{Id: authorId, Name: authorName}})
 
 	require.NoError(s.T(), err)
 }
@@ -162,11 +162,11 @@ func (s *Suite) Test_repository_Update_Book_Error_On_Clear() {
 
 	s.mock.ExpectRollback()
 
-	err := s.repository.UpdateBook(&entities.Book{
+	err := s.repository.UpdateBook(entities.Book{
 		Id:              bookId,
 		Name:            name,
 		Edition:         edition,
-		PublicationYear: publicationYear}, []*entities.Author{{Id: authorId, Name: authorName}})
+		PublicationYear: publicationYear}, []entities.Author{{Id: authorId, Name: authorName}})
 
 	require.Error(s.T(), err)
 }
@@ -199,11 +199,11 @@ func (s *Suite) Test_repository_Update_Book_Error_On_Save() {
 
 	s.mock.ExpectRollback()
 
-	err := s.repository.UpdateBook(&entities.Book{
+	err := s.repository.UpdateBook(entities.Book{
 		Id:              bookId,
 		Name:            name,
 		Edition:         edition,
-		PublicationYear: publicationYear}, []*entities.Author{{Id: authorId, Name: authorName}})
+		PublicationYear: publicationYear}, []entities.Author{{Id: authorId, Name: authorName}})
 
 	require.Error(s.T(), err)
 }
@@ -224,7 +224,7 @@ func (s *Suite) Test_repository_Create_Book_Error() {
 
 	s.mock.ExpectRollback()
 
-	err := s.repository.CreateBook(&entities.Book{
+	err := s.repository.CreateBook(entities.Book{
 		Name:            name,
 		Edition:         edition,
 		PublicationYear: publicationYear})
@@ -261,10 +261,10 @@ func (s *Suite) Test_repository_Get_Book() {
 	res, err := s.repository.GetBook(id)
 
 	require.NoError(s.T(), err)
-	require.Nil(s.T(), deep.Equal(&entities.Book{
+	require.Nil(s.T(), deep.Equal(entities.Book{
 		Id:   id,
 		Name: name,
-		Authors: []*entities.Author{
+		Authors: []entities.Author{
 			{Id: authorId, Name: authorName}}}, res))
 }
 
@@ -324,7 +324,7 @@ func (s *Suite) Test_repository_Get_All_Books() {
 	require.Nil(s.T(), deep.Equal([]entities.Book{{
 		Id:   id,
 		Name: name,
-		Authors: []*entities.Author{
+		Authors: []entities.Author{
 			{Id: authorId, Name: authorName}}}}, res))
 }
 

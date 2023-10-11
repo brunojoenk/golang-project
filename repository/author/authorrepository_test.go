@@ -68,7 +68,7 @@ func (s *Suite) Test_repository_Get_Author() {
 	res, err := s.repository.GetAuthor(id)
 
 	require.NoError(s.T(), err)
-	require.Nil(s.T(), deep.Equal(&entities.Author{Id: id, Name: name}, res))
+	require.Nil(s.T(), deep.Equal(entities.Author{Id: id, Name: name}, res))
 }
 
 func (s *Suite) Test_repository_Get_Author_Error() {

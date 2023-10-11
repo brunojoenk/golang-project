@@ -100,7 +100,7 @@ func TestGetBook(t *testing.T) {
 	)
 
 	bookServiceMock := new(bookservicemock.BookServiceMock)
-	bookResponse := &dtos.BookResponse{Id: bookId, Name: bookName, Edition: bookEdition, PublicationYear: publicationYear, Authors: authorName}
+	bookResponse := dtos.BookResponse{Id: bookId, Name: bookName, Edition: bookEdition, PublicationYear: publicationYear, Authors: authorName}
 	bookServiceMock.On("GetBook", bookId).Return(bookResponse, nil)
 
 	bookControllerTest := bookController{bookService: bookServiceMock}
@@ -142,7 +142,7 @@ func TestGetBookErrorOnQueryDatabase(t *testing.T) {
 	bookId := 12
 
 	bookServiceMock := new(bookservicemock.BookServiceMock)
-	bookServiceMock.On("GetBook", bookId).Return(&dtos.BookResponse{}, errExpected)
+	bookServiceMock.On("GetBook", bookId).Return(dtos.BookResponse{}, errExpected)
 
 	bookControllerTest := bookController{bookService: bookServiceMock}
 
@@ -160,7 +160,7 @@ func TestGetBookErrorWhenAuthorIdNotFound(t *testing.T) {
 	bookId := 12
 
 	bookServiceMock := new(bookservicemock.BookServiceMock)
-	bookServiceMock.On("GetBook", bookId).Return(&dtos.BookResponse{}, utils.ErrBookIdNotFound)
+	bookServiceMock.On("GetBook", bookId).Return(dtos.BookResponse{}, utils.ErrBookIdNotFound)
 
 	bookControllerTest := bookController{bookService: bookServiceMock}
 
@@ -183,7 +183,7 @@ func TestGetAllBook(t *testing.T) {
 		authorName      = "jk rowling"
 	)
 
-	booksResponse := &dtos.BookResponseMetadata{Books: []dtos.BookResponse{{Id: bookId, Name: bookName, Edition: bookEdition, PublicationYear: publicationYear, Authors: authorName}},
+	booksResponse := dtos.BookResponseMetadata{Books: []dtos.BookResponse{{Id: bookId, Name: bookName, Edition: bookEdition, PublicationYear: publicationYear, Authors: authorName}},
 		Pagination: dtos.Pagination{Page: 1, Limit: 10}}
 
 	bookServiceMock := new(bookservicemock.BookServiceMock)
@@ -222,7 +222,7 @@ func TestGetAllBookErrorOnService(t *testing.T) {
 	errExpected := errors.New("error occurred")
 
 	bookServiceMock := new(bookservicemock.BookServiceMock)
-	bookServiceMock.On("GetAllBooks", dtos.GetBooksFilter{}).Return(&dtos.BookResponseMetadata{}, errExpected)
+	bookServiceMock.On("GetAllBooks", dtos.GetBooksFilter{}).Return(dtos.BookResponseMetadata{}, errExpected)
 
 	bookControllerTest := bookController{bookService: bookServiceMock}
 

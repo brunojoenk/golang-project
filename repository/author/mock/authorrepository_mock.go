@@ -21,7 +21,7 @@ func (m *AuthorRepositoryMock) CreateAuthorInBatch(author []entities.Author, bat
 	return args.Error(0)
 }
 
-func (m *AuthorRepositoryMock) GetAuthor(id int) (*entities.Author, error) {
+func (m *AuthorRepositoryMock) GetAuthor(id int) (entities.Author, error) {
 	args := m.Called(id)
-	return args.Get(0).(*entities.Author), args.Error(1)
+	return args.Get(0).(entities.Author), args.Error(1)
 }
