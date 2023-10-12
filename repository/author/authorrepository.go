@@ -7,6 +7,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type IAuthorRepository interface {
@@ -27,7 +28,10 @@ func NewAuthorRepository(d *gorm.DB) IAuthorRepository {
 
 func (a *AuthorRepository) CreateAuthorInBatch(author []entities.Author, batchSize int) error {
 
-	if result := a.db.CreateInBatches(author, batchSize); result.Error != nil {
+	if result := a.db.Clauses(clause.OnConflict{
+		DoNothing: true,
+		Columns:   []clause.Column{{Name: "name"}}}).
+		CreateInBatches(author, batchSize); result.Error != nil {
 		log.Error("Error on create authors in batch: ", result.Error.Error())
 		return result.Error
 	}
