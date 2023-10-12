@@ -69,8 +69,8 @@ func (b *bookService) GetAllBooks(filter dtos.GetBooksFilter) (dtos.BookResponse
 		return dtos.BookResponseMetadata{}, err
 	}
 
-	booksResponse := make([]dtos.BookResponse, 0)
-	for _, book := range books {
+	booksResponse := make([]dtos.BookResponse, len(books))
+	for i, book := range books {
 
 		var authors string
 		for i, author := range book.Authors {
@@ -89,7 +89,7 @@ func (b *bookService) GetAllBooks(filter dtos.GetBooksFilter) (dtos.BookResponse
 			Authors:         authors,
 		}
 
-		booksResponse = append(booksResponse, bookResponse)
+		booksResponse[i] = bookResponse
 	}
 
 	booksResponseMetadata := dtos.BookResponseMetadata{
