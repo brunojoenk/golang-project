@@ -27,7 +27,7 @@ build:
 run-built:
 	./golang-test
 
-build-run:
+build-run: run-services-dev
 	make build && make run-built
 
 swagger:

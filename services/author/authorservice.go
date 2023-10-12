@@ -12,10 +12,10 @@ import (
 	"gorm.io/gorm"
 )
 
-var BATCH_SIZE = 2000
+var BATCH_SIZE_LIMIT = 2000
 
 type IAuthorService interface {
-	GetAllAuthors(filter dtos.GetAuthorsFilter) (*dtos.AuthorResponseMetadata, error)
+	GetAllAuthors(filter dtos.GetAuthorsFilter) (dtos.AuthorResponseMetadata, error)
 	ImportAuthorsFromCSVFile(file string) (int, error)
 }
 
@@ -28,13 +28,13 @@ func NewAuthorService(db *gorm.DB) IAuthorService {
 	return &authorService{authorDb: authorrepo.NewAuthorRepository(db)}
 }
 
-func (a *authorService) GetAllAuthors(filter dtos.GetAuthorsFilter) (*dtos.AuthorResponseMetadata, error) {
+func (a *authorService) GetAllAuthors(filter dtos.GetAuthorsFilter) (dtos.AuthorResponseMetadata, error) {
 
 	filter.Pagination.ValidValuesAndSetDefault()
 	authors, err := a.authorDb.GetAllAuthors(filter)
 	if err != nil {
 		log.Error("Error on get all authors from repositoriy: ", err.Error())
-		return nil, err
+		return dtos.AuthorResponseMetadata{}, err
 	}
 
 	authorsResponse := make([]dtos.AuthorResponse, 0)
@@ -46,7 +46,7 @@ func (a *authorService) GetAllAuthors(filter dtos.GetAuthorsFilter) (*dtos.Autho
 		authorsResponse = append(authorsResponse, *authorResponse)
 	}
 
-	authorResponseMetada := &dtos.AuthorResponseMetadata{
+	authorResponseMetada := dtos.AuthorResponseMetadata{
 		Authors:    authorsResponse,
 		Pagination: filter.Pagination,
 	}
@@ -141,7 +141,7 @@ func (a *authorService) canCreateInBatch(index, recordSize, batchSize int) bool 
 }
 
 func (a *authorService) isCounterEqualBatchSize(batchSize int) bool {
-	return batchSize > 0 && batchSize%BATCH_SIZE == 0
+	return batchSize > 0 && batchSize%BATCH_SIZE_LIMIT == 0
 }
 
 func (a *authorService) isLastItemToProcess(index, recordSize int) bool {

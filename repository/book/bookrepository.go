@@ -11,9 +11,9 @@ import (
 )
 
 type IBookRepository interface {
-	CreateBook(book *entities.Book) error
-	UpdateBook(book *entities.Book, authors []*entities.Author) error
-	GetBook(id int) (*entities.Book, error)
+	CreateBook(book entities.Book) error
+	UpdateBook(book entities.Book, authors []entities.Author) error
+	GetBook(id int) (entities.Book, error)
 	GetAllBooks(filter dtos.GetBooksFilter) ([]entities.Book, error)
 	DeleteBook(id int) error
 }
@@ -28,7 +28,7 @@ func NewBookRepository(db *gorm.DB) IBookRepository {
 	return &BookRepository{db: db}
 }
 
-func (b *BookRepository) CreateBook(book *entities.Book) error {
+func (b *BookRepository) CreateBook(book entities.Book) error {
 
 	if result := b.db.Create(&book); result.Error != nil {
 		log.Error("Error on create book: ", result.Error.Error())
@@ -38,7 +38,7 @@ func (b *BookRepository) CreateBook(book *entities.Book) error {
 	return nil
 }
 
-func (b *BookRepository) UpdateBook(book *entities.Book, authors []*entities.Author) error {
+func (b *BookRepository) UpdateBook(book entities.Book, authors []entities.Author) error {
 
 	if err := b.db.Model(&book).Association("Authors").Clear(); err != nil {
 		log.Error("Error on clear authors from book: ", err.Error())
@@ -55,15 +55,15 @@ func (b *BookRepository) UpdateBook(book *entities.Book, authors []*entities.Aut
 	return nil
 }
 
-func (b *BookRepository) GetBook(id int) (*entities.Book, error) {
+func (b *BookRepository) GetBook(id int) (entities.Book, error) {
 	var book entities.Book
 
 	if result := b.db.Preload("Authors").First(&book, id); result.Error != nil {
 		log.Error("Error on preload authors from book: ", result.Error.Error())
-		return nil, result.Error
+		return book, result.Error
 	}
 
-	return &book, nil
+	return book, nil
 }
 
 func (b *BookRepository) GetAllBooks(filter dtos.GetBooksFilter) ([]entities.Book, error) {

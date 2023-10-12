@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 	"github/brunojoenk/golang-test/models/dtos"
 	"github/brunojoenk/golang-test/models/entities"
@@ -14,9 +15,9 @@ import (
 
 type IBookService interface {
 	CreateBook(bookRequestCreate dtos.BookRequestCreate) error
-	GetAllBooks(filter dtos.GetBooksFilter) (*dtos.BookResponseMetadata, error)
+	GetAllBooks(filter dtos.GetBooksFilter) (dtos.BookResponseMetadata, error)
 	DeleteBook(id int) error
-	GetBook(id int) (*dtos.BookResponse, error)
+	GetBook(id int) (dtos.BookResponse, error)
 	UpdateBook(id int, bookRequestUpdate dtos.BookRequestUpdate) error
 }
 
@@ -36,15 +37,15 @@ func NewBookService(db *gorm.DB) IBookService {
 }
 
 func (b *bookService) CreateBook(bookRequestCreate dtos.BookRequestCreate) error {
-	var authors []*entities.Author
+	var authors []entities.Author
 	for _, authorId := range bookRequestCreate.Authors {
 		author, err := b.authorDb.GetAuthor(authorId)
 		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return utils.ErrAuthorIdNotFound
+			}
 			log.Error("Error on get author from repo: ", err.Error())
 			return err
-		}
-		if author.Id == 0 {
-			return utils.ErrAuthorIdNotFound
 		}
 		authors = append(authors, author)
 	}
@@ -56,16 +57,16 @@ func (b *bookService) CreateBook(bookRequestCreate dtos.BookRequestCreate) error
 		Authors:         authors,
 	}
 
-	return b.bookDb.CreateBook(&book)
+	return b.bookDb.CreateBook(book)
 }
 
-func (b *bookService) GetAllBooks(filter dtos.GetBooksFilter) (*dtos.BookResponseMetadata, error) {
+func (b *bookService) GetAllBooks(filter dtos.GetBooksFilter) (dtos.BookResponseMetadata, error) {
 
 	filter.Pagination.ValidValuesAndSetDefault()
 	books, err := b.bookDb.GetAllBooks(filter)
 	if err != nil {
 		log.Error("Error on get all books from repo: ", err.Error())
-		return nil, err
+		return dtos.BookResponseMetadata{}, err
 	}
 
 	booksResponse := make([]dtos.BookResponse, 0)
@@ -80,7 +81,7 @@ func (b *bookService) GetAllBooks(filter dtos.GetBooksFilter) (*dtos.BookRespons
 			authors += fmt.Sprintf(" | %s", author.Name)
 		}
 
-		bookResponse := &dtos.BookResponse{
+		bookResponse := dtos.BookResponse{
 			Id:              book.Id,
 			Name:            book.Name,
 			Edition:         book.Edition,
@@ -88,10 +89,10 @@ func (b *bookService) GetAllBooks(filter dtos.GetBooksFilter) (*dtos.BookRespons
 			Authors:         authors,
 		}
 
-		booksResponse = append(booksResponse, *bookResponse)
+		booksResponse = append(booksResponse, bookResponse)
 	}
 
-	booksResponseMetadata := &dtos.BookResponseMetadata{
+	booksResponseMetadata := dtos.BookResponseMetadata{
 		Books:      booksResponse,
 		Pagination: filter.Pagination,
 	}
@@ -103,16 +104,15 @@ func (b *bookService) DeleteBook(id int) error {
 	return b.bookDb.DeleteBook(id)
 }
 
-func (b *bookService) GetBook(id int) (*dtos.BookResponse, error) {
+func (b *bookService) GetBook(id int) (dtos.BookResponse, error) {
 	book, err := b.bookDb.GetBook(id)
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return dtos.BookResponse{}, utils.ErrBookIdNotFound
+		}
 		log.Error("Error on get book from repo: ", err.Error())
-		return nil, err
-	}
-
-	if book.Id == 0 {
-		return nil, utils.ErrBookIdNotFound
+		return dtos.BookResponse{}, err
 	}
 
 	var authors string
@@ -132,7 +132,7 @@ func (b *bookService) GetBook(id int) (*dtos.BookResponse, error) {
 		Authors:         authors,
 	}
 
-	return &bookResponse, nil
+	return bookResponse, nil
 }
 
 func (b *bookService) UpdateBook(id int, bookRequestUpdate dtos.BookRequestUpdate) error {
@@ -143,15 +143,15 @@ func (b *bookService) UpdateBook(id int, bookRequestUpdate dtos.BookRequestUpdat
 		return err
 	}
 
-	var authors []*entities.Author
+	var authors []entities.Author
 	for _, authorId := range bookRequestUpdate.Authors {
 		author, err := b.authorDb.GetAuthor(authorId)
 		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return utils.ErrAuthorIdNotFound
+			}
 			log.Error("Error on get author from repo: ", err.Error())
 			return err
-		}
-		if author.Id == 0 {
-			return utils.ErrAuthorIdNotFound
 		}
 		authors = append(authors, author)
 	}

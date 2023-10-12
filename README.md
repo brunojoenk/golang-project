@@ -21,20 +21,19 @@ This app contains a CRUD to manage books and its authors.
 
 You can use Makefile to use commands of the app:
 
-To run all services by docker
+Run all services by docker
 ```
 make services-all-up
 ```
 
-To build app and run:
-```
-make run-services-dev
-make build-run
-```
-
-To run for develop locally
+Run for develop locally
 ```
 make go-code
+```
+
+Build app and run:
+```
+make build-run
 ```
 
 To run unit tests:

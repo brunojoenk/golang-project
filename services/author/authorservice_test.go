@@ -13,58 +13,80 @@ import (
 	authorrepomock "github/brunojoenk/golang-test/repository/author/mock"
 )
 
+var errGeneric = errors.New("generic error")
+
 func TestGetAllAuthors(t *testing.T) {
+	tests := map[string]struct {
+		authors                   []entities.Author
+		expectedErrorOnGetAuthors error
+		expectedErrorResponse     error
+	}{
+		"success on get all authors": {
+			authors: []entities.Author{{Id: 5, Name: "Joenk"}},
+		},
+		"error occurred on get all authors": {
+			authors:                   []entities.Author{{Id: 5, Name: "Joenk"}},
+			expectedErrorOnGetAuthors: errGeneric,
+			expectedErrorResponse:     errGeneric,
+		},
+	}
+	for testName, tc := range tests {
+		t.Run(testName, func(t *testing.T) {
+			authorDbMock := new(authorrepomock.AuthorRepositoryMock)
 
-	authorDbMock := new(authorrepomock.AuthorRepositoryMock)
+			filter := dtos.GetAuthorsFilter{Pagination: dtos.Pagination{Page: 1, Limit: 10}}
+			authorDbMock.On("GetAllAuthors", filter).Return(tc.authors, tc.expectedErrorOnGetAuthors)
 
-	filter := dtos.GetAuthorsFilter{Pagination: dtos.Pagination{Page: 1, Limit: 10}}
-	authorDbMock.On("GetAllAuthors", filter).Return([]entities.Author{{Id: 5, Name: "Joenk"}}, nil)
+			authorServiceTest := authorService{authorDb: authorDbMock}
 
-	authorServiceTest := authorService{authorDb: authorDbMock}
-
-	resp, err := authorServiceTest.GetAllAuthors(filter)
-	require.NoError(t, err)
-	require.Nil(t, deep.Equal([]dtos.AuthorResponse{{Id: 5, Name: "Joenk"}}, resp.Authors))
-	require.Equal(t, resp.Pagination.Limit, 10)
-	require.Equal(t, resp.Pagination.Page, 1)
+			resp, err := authorServiceTest.GetAllAuthors(filter)
+			if tc.expectedErrorResponse != nil {
+				require.Error(t, err)
+				require.Equal(t, tc.expectedErrorResponse, err)
+			} else {
+				require.NoError(t, err)
+				require.Nil(t, deep.Equal([]dtos.AuthorResponse{{Id: 5, Name: "Joenk"}}, resp.Authors))
+			}
+		})
+	}
 }
 
-func TestGetAllAuthorsError(t *testing.T) {
+func TestImportAuthorsFromCSVFile2(t *testing.T) {
+	filePath := "../../data/authorsreduced.csv"
+	tests := map[string]struct {
+		filePath                         string
+		totalAuthorsExpected             int
+		expectedErrorCreateAuthorInBatch error
+		expectedErrorResponse            error
+	}{
+		"success on import all authors": {
+			filePath:             filePath,
+			totalAuthorsExpected: 6,
+		},
+		"error occurred on import all authors (create author in batch)": {
+			filePath:                         filePath,
+			totalAuthorsExpected:             0,
+			expectedErrorCreateAuthorInBatch: errGeneric,
+			expectedErrorResponse:            errGeneric,
+		},
+	}
+	for testName, tc := range tests {
+		t.Run(testName, func(t *testing.T) {
+			authorDbMock := new(authorrepomock.AuthorRepositoryMock)
 
-	authorDbMock := new(authorrepomock.AuthorRepositoryMock)
+			authorDbMock.On("CreateAuthorInBatch", mock.Anything, 6).Return(tc.expectedErrorCreateAuthorInBatch)
 
-	filter := dtos.GetAuthorsFilter{Pagination: dtos.Pagination{Page: 1, Limit: 10}}
-	authorDbMock.On("GetAllAuthors", filter).Return([]entities.Author{}, errors.New("Error on test"))
+			authorServiceTest := authorService{authorDb: authorDbMock}
 
-	authorServiceTest := authorService{authorDb: authorDbMock}
-
-	_, err := authorServiceTest.GetAllAuthors(filter)
-	require.Error(t, err)
-}
-
-func TestImportAuthorsFromCSVFile(t *testing.T) {
-	authorDbMock := new(authorrepomock.AuthorRepositoryMock)
-
-	authorDbMock.On("CreateAuthorInBatch", mock.Anything, 6).Return(nil)
-
-	authorServiceTest := authorService{authorDb: authorDbMock}
-
-	resp, err := authorServiceTest.ImportAuthorsFromCSVFile("../../data/authorsreduced.csv")
-	require.NoError(t, err)
-	require.Equal(t, 6, resp)
-}
-
-func TestImportAuthorsFromCSVFileErronOnCreateAuthorInBatch(t *testing.T) {
-	authorDbMock := new(authorrepomock.AuthorRepositoryMock)
-
-	authorDbMock.On("CreateAuthorInBatch", mock.Anything, 6).Return(errors.New("error occurred"))
-
-	authorServiceTest := authorService{authorDb: authorDbMock}
-
-	resp, err := authorServiceTest.ImportAuthorsFromCSVFile("../../data/authorsreduced.csv")
-
-	require.Error(t, err)
-	require.Equal(t, 0, resp)
+			resp, err := authorServiceTest.ImportAuthorsFromCSVFile(tc.filePath)
+			if tc.expectedErrorResponse != nil {
+				require.Equal(t, tc.expectedErrorResponse, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tc.totalAuthorsExpected, resp)
+			}
+		})
+	}
 }
 
 func TestImportAuthorsFromCSVFileError(t *testing.T) {

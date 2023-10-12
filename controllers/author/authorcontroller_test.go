@@ -27,7 +27,7 @@ func TestGetAllAuthors(t *testing.T) {
 	)
 
 	authorServiceMock := new(authorservicemock.AuthorServiceyMock)
-	authorServiceMock.On("GetAllAuthors", dtos.GetAuthorsFilter{}).Return(&authors, nil)
+	authorServiceMock.On("GetAllAuthors", dtos.GetAuthorsFilter{}).Return(authors, nil)
 
 	authorControllerTest := authorController{authorService: authorServiceMock}
 
@@ -64,7 +64,7 @@ func TestGetAllAuthorsErrorOnFilter(t *testing.T) {
 func TestGetAllAuthorsErrorOnService(t *testing.T) {
 	errExpected := errors.New("error occurred")
 	authorServiceMock := new(authorservicemock.AuthorServiceyMock)
-	authorServiceMock.On("GetAllAuthors", dtos.GetAuthorsFilter{}).Return(&dtos.AuthorResponseMetadata{}, errExpected)
+	authorServiceMock.On("GetAllAuthors", dtos.GetAuthorsFilter{}).Return(dtos.AuthorResponseMetadata{}, errExpected)
 
 	authorControllerTest := authorController{authorService: authorServiceMock}
 
