@@ -37,13 +37,13 @@ func (a *authorService) GetAllAuthors(filter dtos.GetAuthorsFilter) (dtos.Author
 		return dtos.AuthorResponseMetadata{}, err
 	}
 
-	authorsResponse := make([]dtos.AuthorResponse, 0)
-	for _, a := range authors {
-		authorResponse := &dtos.AuthorResponse{
+	authorsResponse := make([]dtos.AuthorResponse, len(authors))
+	for i, a := range authors {
+		authorResponse := dtos.AuthorResponse{
 			Id:   a.Id,
 			Name: a.Name,
 		}
-		authorsResponse = append(authorsResponse, *authorResponse)
+		authorsResponse[i] = authorResponse
 	}
 
 	authorResponseMetada := dtos.AuthorResponseMetadata{
