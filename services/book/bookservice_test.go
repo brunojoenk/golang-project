@@ -10,7 +10,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"gorm.io/gorm"
 )
+
+var errGeneric = errors.New("generic error")
 
 func TestCreateBook(t *testing.T) {
 	var (
@@ -18,61 +21,61 @@ func TestCreateBook(t *testing.T) {
 		edition         = "edition"
 		publicationYear = 2022
 		authorId        = 5
-		authorName      = "joenk"
-		authors         = []entities.Author{{Id: authorId, Name: authorName}}
+		authorName      = "author"
 	)
+	authors := []entities.Author{{Id: authorId, Name: authorName}}
+	book := entities.Book{Name: name, Edition: edition, PublicationYear: publicationYear, Authors: authors}
+	tests := map[string]struct {
+		book                      entities.Book
+		authors                   []entities.Author
+		expectedErrorOnGetAuthors error
+		expectedErrorOnCreateBook error
+		expectedErrorResponse     error
+	}{
+		"success on create book": {
+			book:    book,
+			authors: authors,
+		},
+		"error occurred on create book (author not found)": {
+			book:                      book,
+			authors:                   authors,
+			expectedErrorOnGetAuthors: gorm.ErrRecordNotFound,
+			expectedErrorResponse:     utils.ErrAuthorIdNotFound,
+		},
+		"error occurrente on create book (get authors)": {
+			book:                      book,
+			authors:                   authors,
+			expectedErrorOnGetAuthors: errGeneric,
+			expectedErrorResponse:     errGeneric,
+		},
+		"error occurred on create book (create book)": {
+			book:                      book,
+			authors:                   authors,
+			expectedErrorOnCreateBook: errGeneric,
+			expectedErrorResponse:     errGeneric,
+		},
+	}
+	for testName, tc := range tests {
+		t.Run(testName, func(t *testing.T) {
+			authorDbMock := new(authorrepomock.AuthorRepositoryMock)
+			authorDbMock.On("GetAuthor", tc.authors[0].Id).Return(tc.authors[0], tc.expectedErrorOnGetAuthors)
 
-	authorDbMock := new(authorrepomock.AuthorRepositoryMock)
-	authorDbMock.On("GetAuthor", authorId).Return(authors[0], nil)
+			bookDbMock := new(bookrepomock.BookRepositoryMock)
+			bookDbMock.On("CreateBook", tc.book).Return(tc.expectedErrorOnCreateBook)
 
-	bookDbMock := new(bookrepomock.BookRepositoryMock)
-	bookDbMock.On("CreateBook", entities.Book{Name: name, Edition: edition, PublicationYear: publicationYear, Authors: authors}).Return(nil)
-
-	bookServiceTest := bookService{authorDb: authorDbMock, bookDb: bookDbMock}
-	err := bookServiceTest.CreateBook(dtos.BookRequestCreate{Name: name, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
-
-	require.NoError(t, err)
-}
-
-func TestCreateBook_Error(t *testing.T) {
-	var (
-		name            = "book"
-		edition         = "edition"
-		publicationYear = 2022
-		authorId        = 5
-	)
-
-	errExpected := errors.New("error occurred")
-
-	authorDbMock := new(authorrepomock.AuthorRepositoryMock)
-	authorDbMock.On("GetAuthor", authorId).Return(entities.Author{}, errExpected)
-
-	bookServiceTest := bookService{authorDb: authorDbMock}
-	err := bookServiceTest.CreateBook(dtos.BookRequestCreate{Name: name, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
-
-	require.ErrorIs(t, err, errExpected)
-}
-
-func TestCreateBookErrorWhensIsAuthorIdNotFound(t *testing.T) {
-	var (
-		name            = "book"
-		edition         = "edition"
-		publicationYear = 2022
-		authorId        = 5
-	)
-
-	authorDbMock := new(authorrepomock.AuthorRepositoryMock)
-	authorDbMock.On("GetAuthor", authorId).Return(entities.Author{Id: 0}, nil)
-
-	bookServiceTest := bookService{authorDb: authorDbMock}
-	err := bookServiceTest.CreateBook(dtos.BookRequestCreate{Name: name, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
-
-	require.ErrorIs(t, err, utils.ErrAuthorIdNotFound)
+			bookServiceTest := bookService{authorDb: authorDbMock, bookDb: bookDbMock}
+			err := bookServiceTest.CreateBook(dtos.BookRequestCreate{Name: name, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
+			if tc.expectedErrorResponse != nil {
+				require.ErrorIs(t, err, tc.expectedErrorResponse)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
 }
 
 func TestGetAllBooks(t *testing.T) {
 	var (
-		bookId            = 1
 		bookName          = "book"
 		edition           = "edition"
 		publicationYear   = 2022
@@ -81,63 +84,71 @@ func TestGetAllBooks(t *testing.T) {
 		anotherAuthorId   = 7
 		anotherAuthorName = "bruno"
 		authors           = []entities.Author{{Id: authorId, Name: authorName}, {Id: anotherAuthorId, Name: anotherAuthorName}}
+		book1             = entities.Book{Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: authors}
 	)
+	tests := map[string]struct {
+		booksExpected              []entities.Book
+		expectedErrorOnGetAllBooks error
+		expectedErrorResponse      error
+	}{
+		"success on get all books": {
+			booksExpected: []entities.Book{book1},
+		},
+		"error occurred on get all books": {
+			expectedErrorOnGetAllBooks: errGeneric,
+			expectedErrorResponse:      errGeneric,
+		},
+	}
+	for testName, tc := range tests {
+		t.Run(testName, func(t *testing.T) {
+			bookDbMock := new(bookrepomock.BookRepositoryMock)
+			filter := dtos.GetBooksFilter{Pagination: dtos.Pagination{Page: 1, Limit: 10}}
+			bookDbMock.On("GetAllBooks", filter).Return(tc.booksExpected, tc.expectedErrorOnGetAllBooks)
 
-	filter := dtos.GetBooksFilter{Pagination: dtos.Pagination{Page: 1, Limit: 10}}
-	bookDbMock := new(bookrepomock.BookRepositoryMock)
-	bookDbMock.On("GetAllBooks", filter).Return([]entities.Book{{Id: bookId, Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: authors}}, nil)
+			bookServiceTest := bookService{bookDb: bookDbMock}
+			resp, err := bookServiceTest.GetAllBooks(filter)
+			if tc.expectedErrorResponse != nil {
+				require.ErrorIs(t, err, tc.expectedErrorResponse)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, resp.Books[0].Name, bookName)
+				require.Equal(t, resp.Books[0].Edition, edition)
+				require.Equal(t, resp.Books[0].PublicationYear, publicationYear)
+				require.Equal(t, resp.Books[0].Authors, "joenk | bruno")
+			}
+		})
+	}
 
-	bookServiceTest := bookService{bookDb: bookDbMock}
-	resp, err := bookServiceTest.GetAllBooks(filter)
-
-	require.NoError(t, err)
-	require.Equal(t, resp.Books[0].Name, bookName)
-	require.Equal(t, resp.Books[0].Edition, edition)
-	require.Equal(t, resp.Books[0].PublicationYear, publicationYear)
-	require.Equal(t, resp.Books[0].Authors, "joenk | bruno")
-}
-
-func TestGetAllBooksError(t *testing.T) {
-	errExpected := errors.New("error occurred")
-
-	filter := dtos.GetBooksFilter{Pagination: dtos.Pagination{Page: 1, Limit: 10}}
-	bookDbMock := new(bookrepomock.BookRepositoryMock)
-	bookDbMock.On("GetAllBooks", filter).Return(make([]entities.Book, 0), errExpected)
-
-	bookServiceTest := bookService{bookDb: bookDbMock}
-	_, err := bookServiceTest.GetAllBooks(filter)
-
-	require.ErrorIs(t, err, errExpected)
 }
 
 func TestDeleteBook(t *testing.T) {
 	var (
 		bookId = 2
 	)
+	tests := map[string]struct {
+		expectedErrorOnDeleteBook error
+		expectedErrorResponse     error
+	}{
+		"success on delete book": {},
+		"error occurred on delete book": {
+			expectedErrorOnDeleteBook: errGeneric,
+			expectedErrorResponse:     errGeneric,
+		},
+	}
+	for testName, tc := range tests {
+		t.Run(testName, func(t *testing.T) {
+			bookDbMock := new(bookrepomock.BookRepositoryMock)
+			bookDbMock.On("DeleteBook", bookId).Return(tc.expectedErrorOnDeleteBook)
 
-	bookDbMock := new(bookrepomock.BookRepositoryMock)
-	bookDbMock.On("DeleteBook", bookId).Return(nil)
-
-	bookServiceTest := bookService{bookDb: bookDbMock}
-	err := bookServiceTest.DeleteBook(bookId)
-
-	require.NoError(t, err)
-}
-
-func TestDeleteBookError(t *testing.T) {
-	var (
-		bookId = 2
-	)
-
-	errExpected := errors.New("error occurred")
-
-	bookDbMock := new(bookrepomock.BookRepositoryMock)
-	bookDbMock.On("DeleteBook", bookId).Return(errExpected)
-
-	bookServiceTest := bookService{bookDb: bookDbMock}
-	err := bookServiceTest.DeleteBook(bookId)
-
-	require.Error(t, errExpected, err)
+			bookServiceTest := bookService{bookDb: bookDbMock}
+			err := bookServiceTest.DeleteBook(bookId)
+			if tc.expectedErrorResponse != nil {
+				require.ErrorIs(t, err, tc.expectedErrorResponse)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
 }
 
 func TestGetBook(t *testing.T) {
@@ -151,49 +162,43 @@ func TestGetBook(t *testing.T) {
 		anotherAuthorId   = 7
 		anotherAuthorName = "bruno"
 		authors           = []entities.Author{{Id: authorId, Name: authorName}, {Id: anotherAuthorId, Name: anotherAuthorName}}
+		book              = entities.Book{Id: bookId, Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: authors}
 	)
+	tests := map[string]struct {
+		bookExpected           entities.Book
+		expectedErrorOnGetBook error
+		expectedErrorResponse  error
+	}{
+		"success on get book": {
+			bookExpected: book,
+		},
+		"error occurred on get book (not found)": {
+			expectedErrorOnGetBook: gorm.ErrRecordNotFound,
+			expectedErrorResponse:  utils.ErrBookIdNotFound,
+		},
+		"error occurred on get book": {
+			expectedErrorOnGetBook: errGeneric,
+			expectedErrorResponse:  errGeneric,
+		},
+	}
+	for testName, tc := range tests {
+		t.Run(testName, func(t *testing.T) {
+			bookDbMock := new(bookrepomock.BookRepositoryMock)
+			bookDbMock.On("GetBook", bookId).Return(tc.bookExpected, tc.expectedErrorOnGetBook)
 
-	bookDbMock := new(bookrepomock.BookRepositoryMock)
-	bookDbMock.On("GetBook", bookId).Return(entities.Book{Id: bookId, Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: authors}, nil)
-
-	bookServiceTest := bookService{bookDb: bookDbMock}
-	resp, err := bookServiceTest.GetBook(bookId)
-
-	require.NoError(t, err)
-	require.Equal(t, resp.Name, bookName)
-	require.Equal(t, resp.Edition, edition)
-	require.Equal(t, resp.PublicationYear, publicationYear)
-	require.Equal(t, resp.Authors, "joenk | bruno")
-}
-
-func TestGetBookError(t *testing.T) {
-	var (
-		bookId = 1
-	)
-
-	errExpected := errors.New("error occurred")
-
-	bookDbMock := new(bookrepomock.BookRepositoryMock)
-	bookDbMock.On("GetBook", bookId).Return(entities.Book{}, errExpected)
-
-	bookServiceTest := bookService{bookDb: bookDbMock}
-	_, err := bookServiceTest.GetBook(bookId)
-
-	require.ErrorIs(t, err, errExpected)
-}
-
-func TestGetBookIdNotFound(t *testing.T) {
-	var (
-		bookId = 1
-	)
-
-	bookDbMock := new(bookrepomock.BookRepositoryMock)
-	bookDbMock.On("GetBook", bookId).Return(entities.Book{Id: 0}, nil)
-
-	bookServiceTest := bookService{bookDb: bookDbMock}
-	_, err := bookServiceTest.GetBook(bookId)
-
-	require.ErrorIs(t, err, utils.ErrBookIdNotFound)
+			bookServiceTest := bookService{bookDb: bookDbMock}
+			resp, err := bookServiceTest.GetBook(bookId)
+			if tc.expectedErrorResponse != nil {
+				require.ErrorIs(t, err, tc.expectedErrorResponse)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, resp.Name, bookName)
+				require.Equal(t, resp.Edition, edition)
+				require.Equal(t, resp.PublicationYear, publicationYear)
+				require.Equal(t, resp.Authors, "joenk | bruno")
+			}
+		})
+	}
 }
 
 func TestUpdateBook(t *testing.T) {
@@ -207,111 +212,49 @@ func TestUpdateBook(t *testing.T) {
 		authors         = []entities.Author{{Id: authorId, Name: authorName}}
 		book            = entities.Book{Id: bookId, Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: authors}
 	)
+	tests := map[string]struct {
+		bookExpected             entities.Book
+		expectedErrorOnGetBook   error
+		expectedErrorOnGetAuthor error
+		expectedErrorOnUpdate    error
+		expectedErrorResponse    error
+	}{
+		"success on update book": {
+			bookExpected: book,
+		},
+		"error occurred on update book (get book)": {
+			expectedErrorOnGetBook: errGeneric,
+			expectedErrorResponse:  errGeneric,
+		},
+		"error occurred on update book (get author)": {
+			expectedErrorOnGetAuthor: errGeneric,
+			expectedErrorResponse:    errGeneric,
+		},
+		"error occurante on update book (author not found)": {
+			expectedErrorOnGetAuthor: gorm.ErrRecordNotFound,
+			expectedErrorResponse:    utils.ErrAuthorIdNotFound,
+		},
+		"error occurred on update book (update book)": {
+			expectedErrorOnUpdate: errGeneric,
+			expectedErrorResponse: errGeneric,
+		},
+	}
+	for testName, tc := range tests {
+		t.Run(testName, func(t *testing.T) {
+			bookDbMock := new(bookrepomock.BookRepositoryMock)
+			bookDbMock.On("GetBook", bookId).Return(book, tc.expectedErrorOnGetBook)
+			bookDbMock.On("UpdateBook", book, authors).Return(tc.expectedErrorOnUpdate)
 
-	bookDbMock := new(bookrepomock.BookRepositoryMock)
-	bookDbMock.On("GetBook", bookId).Return(book, nil)
-	bookDbMock.On("UpdateBook", book, authors).Return(nil)
+			authorDbMock := new(authorrepomock.AuthorRepositoryMock)
+			authorDbMock.On("GetAuthor", authorId).Return(authors[0], tc.expectedErrorOnGetAuthor)
 
-	authorDbMock := new(authorrepomock.AuthorRepositoryMock)
-	authorDbMock.On("GetAuthor", authorId).Return(authors[0], nil)
-
-	bookServiceTest := bookService{bookDb: bookDbMock, authorDb: authorDbMock}
-	err := bookServiceTest.UpdateBook(bookId, dtos.BookRequestUpdate{Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
-
-	require.NoError(t, err)
-}
-
-func TestUpdateBookErrorOnGetBook(t *testing.T) {
-	var (
-		bookId          = 5
-		bookName        = "book"
-		edition         = "edition"
-		publicationYear = 2022
-		authorId        = 3
-	)
-
-	errExpected := errors.New("error occurred")
-
-	bookDbMock := new(bookrepomock.BookRepositoryMock)
-	bookDbMock.On("GetBook", bookId).Return(entities.Book{}, errExpected)
-
-	bookServiceTest := bookService{bookDb: bookDbMock}
-	err := bookServiceTest.UpdateBook(bookId, dtos.BookRequestUpdate{Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
-
-	require.ErrorIs(t, err, errExpected)
-}
-
-func TestUpdateBookErrorOnGetAuthor(t *testing.T) {
-	var (
-		bookId          = 5
-		bookName        = "book"
-		edition         = "edition"
-		publicationYear = 2022
-		authorId        = 5
-		authorName      = "joenk"
-		authors         = []entities.Author{{Id: authorId, Name: authorName}}
-	)
-
-	errExpected := errors.New("error occurred")
-
-	bookDbMock := new(bookrepomock.BookRepositoryMock)
-	bookDbMock.On("GetBook", bookId).Return(entities.Book{Id: bookId, Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: authors}, nil)
-
-	authorDbMock := new(authorrepomock.AuthorRepositoryMock)
-	authorDbMock.On("GetAuthor", authorId).Return(entities.Author{}, errExpected)
-
-	bookServiceTest := bookService{bookDb: bookDbMock, authorDb: authorDbMock}
-	err := bookServiceTest.UpdateBook(bookId, dtos.BookRequestUpdate{Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
-
-	require.ErrorIs(t, err, errExpected)
-}
-
-func TestUpdateBookErrorOnAuthorIdNotFound(t *testing.T) {
-	var (
-		bookId          = 5
-		bookName        = "book"
-		edition         = "edition"
-		publicationYear = 2022
-		authorId        = 5
-		authorName      = "joenk"
-		authors         = []entities.Author{{Id: authorId, Name: authorName}}
-	)
-
-	bookDbMock := new(bookrepomock.BookRepositoryMock)
-	bookDbMock.On("GetBook", bookId).Return(entities.Book{Id: bookId, Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: authors}, nil)
-
-	authorDbMock := new(authorrepomock.AuthorRepositoryMock)
-	authorDbMock.On("GetAuthor", authorId).Return(entities.Author{Id: 0}, nil)
-
-	bookServiceTest := bookService{bookDb: bookDbMock, authorDb: authorDbMock}
-	err := bookServiceTest.UpdateBook(bookId, dtos.BookRequestUpdate{Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
-
-	require.ErrorIs(t, err, utils.ErrAuthorIdNotFound)
-}
-
-func TestUpdateBookErrorOnUpdate(t *testing.T) {
-	var (
-		bookId          = 5
-		bookName        = "book"
-		edition         = "edition"
-		publicationYear = 2022
-		authorId        = 5
-		authorName      = "joenk"
-		authors         = []entities.Author{{Id: authorId, Name: authorName}}
-		book            = entities.Book{Id: bookId, Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: authors}
-	)
-
-	errExpected := errors.New("error occurred")
-
-	bookDbMock := new(bookrepomock.BookRepositoryMock)
-	bookDbMock.On("GetBook", bookId).Return(book, nil)
-	bookDbMock.On("UpdateBook", book, authors).Return(errExpected)
-
-	authorDbMock := new(authorrepomock.AuthorRepositoryMock)
-	authorDbMock.On("GetAuthor", authorId).Return(authors[0], nil)
-
-	bookServiceTest := bookService{bookDb: bookDbMock, authorDb: authorDbMock}
-	err := bookServiceTest.UpdateBook(bookId, dtos.BookRequestUpdate{Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
-
-	require.ErrorIs(t, err, errExpected)
+			bookServiceTest := bookService{bookDb: bookDbMock, authorDb: authorDbMock}
+			err := bookServiceTest.UpdateBook(bookId, dtos.BookRequestUpdate{Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
+			if tc.expectedErrorResponse != nil {
+				require.ErrorIs(t, err, tc.expectedErrorResponse)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
 }

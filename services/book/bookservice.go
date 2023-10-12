@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 	"github/brunojoenk/golang-test/models/dtos"
 	"github/brunojoenk/golang-test/models/entities"
@@ -40,11 +41,11 @@ func (b *bookService) CreateBook(bookRequestCreate dtos.BookRequestCreate) error
 	for _, authorId := range bookRequestCreate.Authors {
 		author, err := b.authorDb.GetAuthor(authorId)
 		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return utils.ErrAuthorIdNotFound
+			}
 			log.Error("Error on get author from repo: ", err.Error())
 			return err
-		}
-		if author.Id == 0 {
-			return utils.ErrAuthorIdNotFound
 		}
 		authors = append(authors, author)
 	}
@@ -107,12 +108,11 @@ func (b *bookService) GetBook(id int) (dtos.BookResponse, error) {
 	book, err := b.bookDb.GetBook(id)
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return dtos.BookResponse{}, utils.ErrBookIdNotFound
+		}
 		log.Error("Error on get book from repo: ", err.Error())
 		return dtos.BookResponse{}, err
-	}
-
-	if book.Id == 0 {
-		return dtos.BookResponse{}, utils.ErrBookIdNotFound
 	}
 
 	var authors string
@@ -147,11 +147,11 @@ func (b *bookService) UpdateBook(id int, bookRequestUpdate dtos.BookRequestUpdat
 	for _, authorId := range bookRequestUpdate.Authors {
 		author, err := b.authorDb.GetAuthor(authorId)
 		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return utils.ErrAuthorIdNotFound
+			}
 			log.Error("Error on get author from repo: ", err.Error())
 			return err
-		}
-		if author.Id == 0 {
-			return utils.ErrAuthorIdNotFound
 		}
 		authors = append(authors, author)
 	}
