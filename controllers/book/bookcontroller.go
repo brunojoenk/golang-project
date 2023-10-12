@@ -151,7 +151,7 @@ func (b *bookController) GetBook(c echo.Context) error {
 
 	if err != nil {
 		if errors.Is(err, utils.ErrBookIdNotFound) {
-			return c.JSON(http.StatusBadRequest, "Author ID not found")
+			return c.JSON(http.StatusNotFound, err.Error())
 		}
 		c.Logger().Error("Error on get book %s", err.Error())
 		return c.JSON(http.StatusInternalServerError, "Error on get book. Please contact system admin")
