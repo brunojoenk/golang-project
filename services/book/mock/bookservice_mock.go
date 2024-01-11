@@ -18,9 +18,9 @@ type BookServiceMock struct {
 	mock.Mock
 }
 
-func (m *BookServiceMock) CreateBook(bookRequestCreate dtos.BookRequestCreate) error {
+func (m *BookServiceMock) CreateBook(bookRequestCreate dtos.BookRequestCreate) (dtos.BookResponse, error) {
 	args := m.Called(bookRequestCreate)
-	return args.Error(0)
+	return args.Get(0).(dtos.BookResponse), args.Error(1)
 }
 
 func (m *BookServiceMock) GetAllBooks(filter dtos.GetBooksFilter) (dtos.BookResponseMetadata, error) {
@@ -38,7 +38,7 @@ func (m *BookServiceMock) GetBook(id int) (dtos.BookResponse, error) {
 	return args.Get(0).(dtos.BookResponse), args.Error(1)
 }
 
-func (m *BookServiceMock) UpdateBook(id int, bookRequestUpdate dtos.BookRequestUpdate) error {
+func (m *BookServiceMock) UpdateBook(id int, bookRequestUpdate dtos.BookRequestUpdate) (dtos.BookResponse, error) {
 	args := m.Called(id, bookRequestUpdate)
-	return args.Error(0)
+	return args.Get(0).(dtos.BookResponse), args.Error(1)
 }

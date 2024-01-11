@@ -11,14 +11,14 @@ type BookRepositoryMock struct {
 	mock.Mock
 }
 
-func (m *BookRepositoryMock) CreateBook(book entities.Book) error {
+func (m *BookRepositoryMock) CreateBook(book entities.Book) (entities.Book, error) {
 	args := m.Called(book)
-	return args.Error(0)
+	return args.Get(0).(entities.Book), args.Error(1)
 }
 
-func (m *BookRepositoryMock) UpdateBook(book entities.Book, authors []entities.Author) error {
+func (m *BookRepositoryMock) UpdateBook(book entities.Book, authors []entities.Author) (entities.Book, error) {
 	args := m.Called(book, authors)
-	return args.Error(0)
+	return args.Get(0).(entities.Book), args.Error(1)
 }
 
 func (m *BookRepositoryMock) GetBook(id int) (entities.Book, error) {
