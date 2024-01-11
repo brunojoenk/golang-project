@@ -50,7 +50,7 @@ func (b *bookController) CreateBook(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, fmt.Sprintf("Request body to crate a book is invalid: %s", err.Error()))
 	}
 
-	err := b.bookService.CreateBook(*bookRequestCreate)
+	book, err := b.bookService.CreateBook(*bookRequestCreate)
 
 	if err != nil {
 		if errors.Is(err, utils.ErrAuthorIdNotFound) {
@@ -60,7 +60,7 @@ func (b *bookController) CreateBook(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, "Error on create book. Please, contact system admin")
 	}
 
-	return c.JSON(http.StatusCreated, "Created")
+	return c.JSON(http.StatusCreated, book)
 }
 
 // GetAllBooks godoc
@@ -124,7 +124,7 @@ func (b *bookController) DeleteBook(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, "Erro on delete book. Please, contact system admin")
 	}
 
-	return c.JSON(http.StatusOK, "Deleted")
+	return c.JSON(http.StatusNoContent, "Deleted")
 }
 
 // GetBook godoc
@@ -187,7 +187,7 @@ func (b *bookController) UpdateBook(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, fmt.Sprintf("Error on parse body to update book: %s", err.Error()))
 	}
 
-	err = b.bookService.UpdateBook(id, *bookRequestUpdate)
+	bookUpdated, err := b.bookService.UpdateBook(id, *bookRequestUpdate)
 
 	if err != nil {
 		if errors.Is(err, utils.ErrAuthorIdNotFound) {
@@ -197,5 +197,5 @@ func (b *bookController) UpdateBook(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, "Error on update book. Please contact system admin")
 	}
 
-	return c.JSON(http.StatusOK, "Updated")
+	return c.JSON(http.StatusOK, bookUpdated)
 }

@@ -14,11 +14,11 @@ import (
 )
 
 type IBookService interface {
-	CreateBook(bookRequestCreate dtos.BookRequestCreate) error
+	CreateBook(bookRequestCreate dtos.BookRequestCreate) (dtos.BookResponse, error)
 	GetAllBooks(filter dtos.GetBooksFilter) (dtos.BookResponseMetadata, error)
 	DeleteBook(id int) error
 	GetBook(id int) (dtos.BookResponse, error)
-	UpdateBook(id int, bookRequestUpdate dtos.BookRequestUpdate) error
+	UpdateBook(id int, bookRequestUpdate dtos.BookRequestUpdate) (dtos.BookResponse, error)
 }
 
 type bookService struct {
@@ -36,16 +36,16 @@ func NewBookService(db *gorm.DB) IBookService {
 	}
 }
 
-func (b *bookService) CreateBook(bookRequestCreate dtos.BookRequestCreate) error {
+func (b *bookService) CreateBook(bookRequestCreate dtos.BookRequestCreate) (dtos.BookResponse, error) {
 	var authors []entities.Author
 	for _, authorId := range bookRequestCreate.Authors {
 		author, err := b.authorDb.GetAuthor(authorId)
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return utils.ErrAuthorIdNotFound
+				return dtos.BookResponse{}, utils.ErrAuthorIdNotFound
 			}
 			log.Error("Error on get author from repo: ", err.Error())
-			return err
+			return dtos.BookResponse{}, err
 		}
 		authors = append(authors, author)
 	}
@@ -57,7 +57,20 @@ func (b *bookService) CreateBook(bookRequestCreate dtos.BookRequestCreate) error
 		Authors:         authors,
 	}
 
-	return b.bookDb.CreateBook(book)
+	createdBook, err := b.bookDb.CreateBook(book)
+	if err != nil {
+		log.Error("Error on create book from repo: ", err.Error())
+		return dtos.BookResponse{}, err
+	}
+
+	dtosBookResponse := dtos.BookResponse{
+		Id:              createdBook.Id,
+		Name:            createdBook.Name,
+		Edition:         createdBook.Edition,
+		PublicationYear: createdBook.PublicationYear,
+	}
+
+	return dtosBookResponse, nil
 }
 
 func (b *bookService) GetAllBooks(filter dtos.GetBooksFilter) (dtos.BookResponseMetadata, error) {
@@ -135,12 +148,12 @@ func (b *bookService) GetBook(id int) (dtos.BookResponse, error) {
 	return bookResponse, nil
 }
 
-func (b *bookService) UpdateBook(id int, bookRequestUpdate dtos.BookRequestUpdate) error {
+func (b *bookService) UpdateBook(id int, bookRequestUpdate dtos.BookRequestUpdate) (dtos.BookResponse, error) {
 	book, err := b.bookDb.GetBook(id)
 
 	if err != nil {
 		log.Error("Error on get book from repo: ", err.Error())
-		return err
+		return dtos.BookResponse{}, err
 	}
 
 	var authors []entities.Author
@@ -148,10 +161,10 @@ func (b *bookService) UpdateBook(id int, bookRequestUpdate dtos.BookRequestUpdat
 		author, err := b.authorDb.GetAuthor(authorId)
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return utils.ErrAuthorIdNotFound
+				return dtos.BookResponse{}, utils.ErrAuthorIdNotFound
 			}
 			log.Error("Error on get author from repo: ", err.Error())
-			return err
+			return dtos.BookResponse{}, err
 		}
 		authors = append(authors, author)
 	}
@@ -160,12 +173,30 @@ func (b *bookService) UpdateBook(id int, bookRequestUpdate dtos.BookRequestUpdat
 	book.Edition = bookRequestUpdate.Edition
 	book.PublicationYear = bookRequestUpdate.PublicationYear
 
-	err = b.bookDb.UpdateBook(book, authors)
+	updatedBook, err := b.bookDb.UpdateBook(book, authors)
 
 	if err != nil {
 		log.Error("Error on update book from repo: ", err.Error())
-		return err
+		return dtos.BookResponse{}, err
 	}
 
-	return nil
+	var authorsString string
+	for i, author := range updatedBook.Authors {
+		if i == 0 {
+			authorsString = author.Name
+			continue
+		}
+		authorsString += fmt.Sprintf(" | %s", author.Name)
+	}
+
+	dtosBookResponse := dtos.BookResponse{
+		Id:              updatedBook.Id,
+		Name:            updatedBook.Name,
+		Edition:         updatedBook.Edition,
+		PublicationYear: updatedBook.PublicationYear,
+		Authors:         authorsString,
+	}
+
+	return dtosBookResponse, nil
+
 }
