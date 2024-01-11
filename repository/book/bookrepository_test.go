@@ -86,13 +86,36 @@ func (s *Suite) Test_repository_Create_Book() {
 
 	s.mock.ExpectCommit()
 
-	err := s.repository.CreateBook(entities.Book{
+	s.mock.ExpectQuery(regexp.QuoteMeta(
+		`SELECT * FROM "books" WHERE "books"."id" = $1 ORDER BY "books"."id" LIMIT 1`)).
+		WithArgs(bookId).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "edition", "publication_year"}).
+			AddRow(bookId, name, edition, publicationYear))
+
+	s.mock.ExpectQuery(regexp.QuoteMeta(
+		`SELECT * FROM "author_book" WHERE "author_book"."book_id" = $1`)).
+		WithArgs(bookId).
+		WillReturnRows(sqlmock.NewRows([]string{"book_id", "author_id"}).
+			AddRow(bookId, authorId))
+
+	s.mock.ExpectQuery(regexp.QuoteMeta(
+		`SELECT * FROM "authors" WHERE "authors"."id" = $1`)).
+		WithArgs(authorId).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).
+			AddRow(authorId, authorName))
+
+	book, err := s.repository.CreateBook(entities.Book{
 		Name:            name,
 		Edition:         edition,
 		PublicationYear: publicationYear,
 		Authors:         []entities.Author{{Id: authorId, Name: authorName}}})
 
 	require.NoError(s.T(), err)
+	require.Equal(s.T(), bookId, book.Id)
+	require.Equal(s.T(), name, book.Name)
+	require.Equal(s.T(), edition, book.Edition)
+	require.Equal(s.T(), publicationYear, book.PublicationYear)
+	require.Equal(s.T(), []entities.Author{{Id: authorId, Name: authorName}}, book.Authors)
 }
 
 func (s *Suite) Test_repository_Update_Book() {
@@ -133,13 +156,18 @@ func (s *Suite) Test_repository_Update_Book() {
 
 	s.mock.ExpectCommit()
 
-	err := s.repository.UpdateBook(entities.Book{
+	book, err := s.repository.UpdateBook(entities.Book{
 		Id:              bookId,
 		Name:            name,
 		Edition:         edition,
 		PublicationYear: publicationYear}, []entities.Author{{Id: authorId, Name: authorName}})
 
 	require.NoError(s.T(), err)
+	require.Equal(s.T(), bookId, book.Id)
+	require.Equal(s.T(), name, book.Name)
+	require.Equal(s.T(), edition, book.Edition)
+	require.Equal(s.T(), publicationYear, book.PublicationYear)
+	require.Equal(s.T(), []entities.Author{{Id: authorId, Name: authorName}}, book.Authors)
 }
 
 func (s *Suite) Test_repository_Update_Book_Error_On_Clear() {
@@ -162,7 +190,7 @@ func (s *Suite) Test_repository_Update_Book_Error_On_Clear() {
 
 	s.mock.ExpectRollback()
 
-	err := s.repository.UpdateBook(entities.Book{
+	_, err := s.repository.UpdateBook(entities.Book{
 		Id:              bookId,
 		Name:            name,
 		Edition:         edition,
@@ -199,7 +227,7 @@ func (s *Suite) Test_repository_Update_Book_Error_On_Save() {
 
 	s.mock.ExpectRollback()
 
-	err := s.repository.UpdateBook(entities.Book{
+	_, err := s.repository.UpdateBook(entities.Book{
 		Id:              bookId,
 		Name:            name,
 		Edition:         edition,
@@ -224,7 +252,7 @@ func (s *Suite) Test_repository_Create_Book_Error() {
 
 	s.mock.ExpectRollback()
 
-	err := s.repository.CreateBook(entities.Book{
+	_, err := s.repository.CreateBook(entities.Book{
 		Name:            name,
 		Edition:         edition,
 		PublicationYear: publicationYear})
