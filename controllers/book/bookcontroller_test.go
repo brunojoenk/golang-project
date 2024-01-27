@@ -156,7 +156,7 @@ func TestGetBookErrorOnQueryDatabase(t *testing.T) {
 
 }
 
-func TestGetBookErrorWhenAuthorIdNotFound(t *testing.T) {
+func TestGetBookErrorWhenBookIdNotFound(t *testing.T) {
 	bookId := 12
 
 	bookServiceMock := new(bookservicemock.BookServiceMock)
@@ -170,7 +170,7 @@ func TestGetBookErrorWhenAuthorIdNotFound(t *testing.T) {
 	e.GET("/book/:id", bookControllerTest.GetBook)
 	e.ServeHTTP(recorder, request)
 
-	require.Equal(t, http.StatusBadRequest, recorder.Code)
+	require.Equal(t, http.StatusNotFound, recorder.Code)
 
 }
 
@@ -251,7 +251,7 @@ func TestDeleteBook(t *testing.T) {
 	e.ServeHTTP(recorder, request)
 
 	require.NoError(t, err)
-	require.Equal(t, http.StatusOK, recorder.Code)
+	require.Equal(t, http.StatusNoContent, recorder.Code)
 
 }
 
