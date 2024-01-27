@@ -8,10 +8,8 @@ RUN go mod download
 RUN apk update
 RUN go build -o run-app
 
-RUN apk --no-cache add libcap && setcap 'cap_net_bind_service=+ep' ./run-app
-
 USER 1000
 
-EXPOSE 3000 80
+EXPOSE 3000
 
 CMD [ "./run-app" ]
