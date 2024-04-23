@@ -61,10 +61,10 @@ func TestCreateBook(t *testing.T) {
 			authorDbMock.On("GetAuthor", tc.authors[0].Id).Return(tc.authors[0], tc.expectedErrorOnGetAuthors)
 
 			bookDbMock := new(bookrepomock.BookRepositoryMock)
-			bookDbMock.On("CreateBook", tc.book).Return(tc.expectedErrorOnCreateBook)
+			bookDbMock.On("CreateBook", tc.book).Return(entities.Book{}, tc.expectedErrorOnCreateBook)
 
 			bookServiceTest := bookService{authorDb: authorDbMock, bookDb: bookDbMock}
-			err := bookServiceTest.CreateBook(dtos.BookRequestCreate{Name: name, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
+			_, err := bookServiceTest.CreateBook(dtos.BookRequestCreate{Name: name, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
 			if tc.expectedErrorResponse != nil {
 				require.ErrorIs(t, err, tc.expectedErrorResponse)
 			} else {
@@ -243,13 +243,13 @@ func TestUpdateBook(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			bookDbMock := new(bookrepomock.BookRepositoryMock)
 			bookDbMock.On("GetBook", bookId).Return(book, tc.expectedErrorOnGetBook)
-			bookDbMock.On("UpdateBook", book, authors).Return(tc.expectedErrorOnUpdate)
+			bookDbMock.On("UpdateBook", book, authors).Return(book, tc.expectedErrorOnUpdate)
 
 			authorDbMock := new(authorrepomock.AuthorRepositoryMock)
 			authorDbMock.On("GetAuthor", authorId).Return(authors[0], tc.expectedErrorOnGetAuthor)
 
 			bookServiceTest := bookService{bookDb: bookDbMock, authorDb: authorDbMock}
-			err := bookServiceTest.UpdateBook(bookId, dtos.BookRequestUpdate{Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
+			_, err := bookServiceTest.UpdateBook(bookId, dtos.BookRequestUpdate{Name: bookName, Edition: edition, PublicationYear: publicationYear, Authors: []int{authorId}})
 			if tc.expectedErrorResponse != nil {
 				require.ErrorIs(t, err, tc.expectedErrorResponse)
 			} else {

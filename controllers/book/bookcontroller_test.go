@@ -20,7 +20,7 @@ import (
 
 func TestCreateBook(t *testing.T) {
 	bookServiceMock := new(bookservicemock.BookServiceMock)
-	bookServiceMock.On("CreateBook", dtos.BookRequestCreate{}).Return(nil)
+	bookServiceMock.On("CreateBook", dtos.BookRequestCreate{}).Return(dtos.BookResponse{Id: 1}, nil)
 
 	bookControllerTest := bookController{bookService: bookServiceMock}
 
@@ -58,7 +58,7 @@ func TestCreateBookErrorOnBody(t *testing.T) {
 func TestCreateBookErrorOnService(t *testing.T) {
 	errExpected := errors.New("error occurred")
 	bookServiceMock := new(bookservicemock.BookServiceMock)
-	bookServiceMock.On("CreateBook", dtos.BookRequestCreate{}).Return(errExpected)
+	bookServiceMock.On("CreateBook", dtos.BookRequestCreate{}).Return(dtos.BookResponse{}, errExpected)
 
 	bookControllerTest := bookController{bookService: bookServiceMock}
 
@@ -75,7 +75,7 @@ func TestCreateBookErrorOnService(t *testing.T) {
 
 func TestCreateBookWhenAuthorIdIsNotFound(t *testing.T) {
 	bookServiceMock := new(bookservicemock.BookServiceMock)
-	bookServiceMock.On("CreateBook", dtos.BookRequestCreate{}).Return(utils.ErrAuthorIdNotFound)
+	bookServiceMock.On("CreateBook", dtos.BookRequestCreate{}).Return(dtos.BookResponse{}, utils.ErrAuthorIdNotFound)
 
 	bookControllerTest := bookController{bookService: bookServiceMock}
 
@@ -156,7 +156,7 @@ func TestGetBookErrorOnQueryDatabase(t *testing.T) {
 
 }
 
-func TestGetBookErrorWhenAuthorIdNotFound(t *testing.T) {
+func TestGetBookErrorWhenBookIdNotFound(t *testing.T) {
 	bookId := 12
 
 	bookServiceMock := new(bookservicemock.BookServiceMock)
@@ -170,7 +170,7 @@ func TestGetBookErrorWhenAuthorIdNotFound(t *testing.T) {
 	e.GET("/book/:id", bookControllerTest.GetBook)
 	e.ServeHTTP(recorder, request)
 
-	require.Equal(t, http.StatusBadRequest, recorder.Code)
+	require.Equal(t, http.StatusNotFound, recorder.Code)
 
 }
 
@@ -251,7 +251,7 @@ func TestDeleteBook(t *testing.T) {
 	e.ServeHTTP(recorder, request)
 
 	require.NoError(t, err)
-	require.Equal(t, http.StatusOK, recorder.Code)
+	require.Equal(t, http.StatusNoContent, recorder.Code)
 
 }
 
@@ -297,7 +297,7 @@ func TestUpdateBook(t *testing.T) {
 	bookRequestUpdate := dtos.BookRequestUpdate{Name: "Harry Potter 2", Edition: "Segunda edição", PublicationYear: 2022, Authors: []int{5}}
 
 	bookServiceMock := new(bookservicemock.BookServiceMock)
-	bookServiceMock.On("UpdateBook", bookId, bookRequestUpdate).Return(nil)
+	bookServiceMock.On("UpdateBook", bookId, bookRequestUpdate).Return(dtos.BookResponse{}, nil)
 
 	bookControllerTest := bookController{bookService: bookServiceMock}
 
@@ -353,7 +353,7 @@ func TestUpdateBookErrorOnService(t *testing.T) {
 	bookRequestUpdate := dtos.BookRequestUpdate{Name: "Harry Potter 2", Edition: "Segunda edição", PublicationYear: 2022, Authors: []int{5}}
 
 	bookServiceMock := new(bookservicemock.BookServiceMock)
-	bookServiceMock.On("UpdateBook", bookId, bookRequestUpdate).Return(errors.New("error occurred"))
+	bookServiceMock.On("UpdateBook", bookId, bookRequestUpdate).Return(dtos.BookResponse{}, errors.New("error occurred"))
 
 	bookControllerTest := bookController{bookService: bookServiceMock}
 
@@ -377,7 +377,7 @@ func TestUpdateBookErrorWhenAuthorIdNotFound(t *testing.T) {
 	bookRequestUpdate := dtos.BookRequestUpdate{Name: "Harry Potter 2", Edition: "Segunda edição", PublicationYear: 2022, Authors: []int{5}}
 
 	bookServiceMock := new(bookservicemock.BookServiceMock)
-	bookServiceMock.On("UpdateBook", bookId, bookRequestUpdate).Return(utils.ErrAuthorIdNotFound)
+	bookServiceMock.On("UpdateBook", bookId, bookRequestUpdate).Return(dtos.BookResponse{}, utils.ErrAuthorIdNotFound)
 
 	bookControllerTest := bookController{bookService: bookServiceMock}
 
