@@ -60,23 +60,25 @@ make swagger
 /swagger/index.html
 ```
 
-### Tools and steps to built this app
+## Tools and Steps Used in Building This App
 
-- I used MacOS to develo app;
-- I used VSCode IDE to code it;
-- I used Postgres database;
-- I used Echo for web framework;
-- I used Swagger to generate docs of APIs;
-- I used Gorm ORM;
-- I used Docker;
-- I used Makfile to improves experience on run app;
+- **Operating System:** macOS was utilized for development.
+- **IDE:** VSCode served as the Integrated Development Environment for coding.
+- **Database:** PostgreSQL was chosen as the database management system.
+- **Web Framework:** Echo was the web framework employed.
+- **API Documentation:** Swagger was utilized to generate documentation for the APIs.
+- **ORM:** Gorm was used as the Object-Relational Mapping tool.
+- **Containerization:** Docker facilitated containerization.
+- **Makefile:** A Makefile was implemented to enhance the experience of running the app.
 
-#### Some details about project building
+## Project Building Details
 
-- At the begin, I thought use go-routines/workers to import authors from csv file. But It was very slowly to import all authors one by one even using concurrency. So, I changed to use unique key name to avoid duplicate authors and I used insert in batch to import authors.
-   - Observation: In branch 'turn-func-concurrence' I did some tests using concurrence/insert in batch to improve response time on import a big list of authors from csv file.
+Initially, I contemplated employing Go routines/workers to import authors from a CSV file. However, even with concurrency, the process proved sluggish. Consequently, I opted to utilize a unique key name to prevent duplicate authors and implemented batch insertion to expedite the import process.
 
-- On use docker-compose, the host to connect on database is different, when run only container of database, I need use localhost, but when is communicate between two containers, I need use postgres-go and create new network for this communication called golangtestdriver (You can see it on docker-compose.yml).
+**Observation:** In the 'turn-func-concurrence' branch, I conducted tests leveraging concurrency and batch insertion to enhance the response time when importing a large list of authors from a CSV file.
 
-- To turn easier for manager relations of book/authors, I decided to use Gorm (I often use sqlx)
+When utilizing Docker Compose, the host for connecting to the database differs. When running only the database container, 'localhost' is used. However, when communication occurs between two containers, 'postgres-go' is employed. A new network named 'golangtestdriver' was created for this communication, as specified in the `docker-compose.yml` file.
+
+To simplify the management of relationships between books and authors, Gorm was chosen over my usual choice, sqlx.
+
 
